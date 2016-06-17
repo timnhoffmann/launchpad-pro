@@ -101,4 +101,55 @@ typedef unsigned char  u8;
 
 // ____________________________________________________________________________
 
+// ____________________________________________________________________________
+//
+// buttons
+// ____________________________________________________________________________
+
+#define	BUTTON_RECORD_ARM	01
+#define	BUTTON_TRACK_SEL	02
+#define	BUTTON_MUTE		03
+#define	BUTTON_SOLO		04
+#define	BUTTON_VOLUME		05
+#define	BUTTON_PAN		06
+#define	BUTTON_SENDS		07
+#define	BUTTON_STOP_CLIP	08
+//
+#define	BUTTON_CIRCLE		10
+#define	BUTTON_DOUBLE		20
+#define	BUTTON_DUPLICATE       	30
+#define	BUTTON_QUANTIZE		40
+#define	BUTTON_DELETE		50
+#define	BUTTON_UNDO		60
+#define	BUTTON_CLICK		70
+#define	BUTTON_SHIFT		80
+//
+#define	BUTTON_UP		91
+#define	BUTTON_DOWN		92
+#define	BUTTON_LEFT		93
+#define	BUTTON_RIGHT		94
+#define	BUTTON_SESSION		95
+#define	BUTTON_NOTE		96
+#define	BUTTON_DEVICE		97
+#define	BUTTON_USER		98
+//
+#define	BUTTON_SCENE_1		19
+#define	BUTTON_SCENE_2		29
+#define	BUTTON_SCENE_3		39
+#define	BUTTON_SCENE_4		49
+#define	BUTTON_SCENE_5		59
+#define	BUTTON_SCENE_6		69
+#define	BUTTON_SCENE_7		79
+#define	BUTTON_SCENE_8		89
+
+// ____________________________________________________________________________
+//
+// some constants
+// ____________________________________________________________________________
+
+#define MODE_SEQ_CA             BUTTON_DEVICE
+#define MODE_NOTE               BUTTON_NOTE
+#define MODE_SEQ_STEP           BUTTON_SESSION
+#define MODE_USER               BUTTON_USER
+
 #endif

@@ -160,5 +160,22 @@ void app_surface_event(u8 type, u8 index, u8 value);
  */
 void app_aftertouch_event(u8 index, u8 value);
 
+/**
+ * cyclic left rotation
+ * @param value - the value to rotate
+ * @param count - the number of bits to rotatet by
+ */
+u8 rotl8 (u8 value, unsigned int count);
 
+/**
+ * cyclic right rotation
+ * @param value - the value to rotate
+ * @param count - the number of bits to rotatet by
+ */
+u8 rotr8 (u8 value, unsigned int count);
+
+/**
+* a totally naive and almost unusable rand function
+*/
+u8 simple_rand();
 #endif
