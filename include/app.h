@@ -160,6 +160,11 @@ void app_surface_event(u8 type, u8 index, u8 value);
  */
 void app_aftertouch_event(u8 index, u8 value);
 
+// ____________________________________________________________________________
+//
+// utility methods
+// ____________________________________________________________________________
+
 /**
  * cyclic left rotation
  * @param value - the value to rotate

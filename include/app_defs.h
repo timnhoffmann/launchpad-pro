@@ -124,6 +124,15 @@ typedef unsigned char  u8;
 #define	BUTTON_CLICK		70
 #define	BUTTON_SHIFT		80
 //
+#define	BUTTON_SCENE_1		19
+#define	BUTTON_SCENE_2		29
+#define	BUTTON_SCENE_3		39
+#define	BUTTON_SCENE_4		49
+#define	BUTTON_SCENE_5		59
+#define	BUTTON_SCENE_6		69
+#define	BUTTON_SCENE_7		79
+#define	BUTTON_SCENE_8		89
+//
 #define	BUTTON_UP		91
 #define	BUTTON_DOWN		92
 #define	BUTTON_LEFT		93
@@ -133,23 +142,24 @@ typedef unsigned char  u8;
 #define	BUTTON_DEVICE		97
 #define	BUTTON_USER		98
 //
-#define	BUTTON_SCENE_1		19
-#define	BUTTON_SCENE_2		29
-#define	BUTTON_SCENE_3		39
-#define	BUTTON_SCENE_4		49
-#define	BUTTON_SCENE_5		59
-#define	BUTTON_SCENE_6		69
-#define	BUTTON_SCENE_7		79
-#define	BUTTON_SCENE_8		89
+// not corresponding to an LED (or a buttonevent for that)
+#define	BUTTON_SETUP		90
 
 // ____________________________________________________________________________
 //
 // some constants
 // ____________________________________________________________________________
 
-#define MODE_SEQ_CA             BUTTON_DEVICE
-#define MODE_NOTE               BUTTON_NOTE
-#define MODE_SEQ_STEP           BUTTON_SESSION
-#define MODE_USER               BUTTON_USER
+#define MODE_SEQ_CA                   BUTTON_DEVICE
+#define MODE_NOTE                     BUTTON_NOTE
+#define MODE_SEQ_STEP                 BUTTON_SESSION
+#define MODE_USER                     BUTTON_USER
+#define MODE_SEQ_CA_SETUP             BUTTON_DEVICE|128
+#define MODE_NOTE_SETUP               BUTTON_NOTE|128
+#define MODE_SEQ_STEP_SETUP           BUTTON_SESSION|128
+#define MODE_USER_SETUP               BUTTON_USER|128
 
+// your choice...
+#define MIDDLE_C                60
+//#define MIDDLE_C                72
 #endif

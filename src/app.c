@@ -59,7 +59,7 @@ u32 tempo = 500; // 120 bpm
 u16 buttonState[10] = {0,0,0,0,0,0,0,0,0,0};
 
 /**
- * returns wether the button at (i,j) is currently pressed.
+ * returns whether the button at (i,j) is currently pressed.
  * the state gets updated AFTER each press is evaluated (so for a given event it gives the state of that button before the event).
  * @param i -- the column
  * @param j -- the row
@@ -86,8 +86,14 @@ u8 getButtonStateIndex(u8 index) {
 //
 
 const int SIZEM = 8;
+// base note per instrument
+int seq_ca_rootNote[8] = {60,62,64,65,67,69,36,36};
+// current note per instrument
 int seq_ca_noteNr[8] = {60,62,64,65,67,69,36,36};
+// midi channel per instrument
 u8 seq_ca_channel[8] = {9,9,9,9,9,9,0,0};
+
+// the ca bits
 u8 slots[8] = {0,0,0,0,0,0,0,0};
 
 
@@ -112,8 +118,6 @@ void seq_ca_updateLEDs() {
     }
 }
 
-
-
 /**
  * clear the SEQ_CA
  */
@@ -132,10 +136,22 @@ void seq_ca_random() {
   seq_ca_updateLEDs();
 }
 
+/**
+ * inits the seq_ca mode after a mode change
+ */
 void seq_ca_mode_init() {
   seq_ca_updateLEDs();
+  // clear the lower Button row:
+  for(int i = 1; i<9; i++) {
+    hal_plot_led(TYPEPAD, i, 0, 0, 0);
+  }
 }
 
+/**
+ * update step for the cellular automaton. This is the heart of the ca.
+ * Depending on the parity of the time parameter the even or odd bits/leds/cells are updated.
+ * @param t - the time. only t%2 matters though.
+ */
 void seq_ca_update(int t) {
   
   for(int j = 0; j<SIZEM; j++) {
@@ -152,10 +168,12 @@ void seq_ca_update(int t) {
   }
 }
 
-
-
-
 u8 scale[14] = {0,0,2,2,4,4,5,5,7,7,9,9,11,11};
+
+/**
+ * generates the pitch for the i-th instrument
+ * @param i - the number of the instrument. 0<= i<8.
+ */
 u8 makeNote(int i) {
   
   return (u8) ( 0b01111111 &
@@ -184,7 +202,9 @@ u8 makeNote(int i) {
   /* 	       ); */
     }
 
-// Play the current state as midi notes:
+/**
+ * Play the current state as midi notes.
+ */
 void seq_ca_play() {
   for(int i = 0; i<8; i++) {
     int c = 0; 
@@ -196,7 +216,7 @@ void seq_ca_play() {
     if(on  & ! ( (playing >> i)%2 ==1) ) {
       if(i>5) {
 	seq_ca_noteNr[i] = makeNote(i);
-      }
+      } else seq_ca_noteNr[i] = seq_ca_rootNote[i];
       hal_send_midi(USBMIDI, NOTEON | seq_ca_channel[i], seq_ca_noteNr[i], 16*c); // FIXEDV?96:16*c
       playing =(u8) (playing | (1<<i));
     } else if((!on) &  ( (playing >> i)%2 ==1) ) {
@@ -307,6 +327,115 @@ void seq_ca_typepad(u8 index, u8 value) {
 
 //_________________________________________________
 //
+// SEQ_CA setup mode
+//_________________________________________________
+//
+
+u8 seq_ca_setup_inst = 0;
+u8 seq_ca_setup_note_root = 48;
+/**
+ * the setup layout for the SEQ_CA
+ */
+void seq_ca_setup_init() {
+  for(int i = 0; i<8; i++) {
+    u8 v = i==seq_ca_setup_inst?MAXLED:0;
+    hal_plot_led(TYPEPAD, i+1, v, v, v);
+  }
+  
+  // the Pad-no for the MIDI-channel
+  u8 mc = seq_ca_channel[seq_ca_setup_inst];
+  mc = mc%8 +1 + (mc/8 +1)*10;
+  // light the channel choice pads:
+  for(int i = 11; i<19; i++) {
+    u8 v = i==mc?MAXLED:5;
+    hal_plot_led(TYPEPAD, i, 0, 0, v);
+  }
+  for(int i = 21; i<29; i++) {
+    u8 v = i==mc?MAXLED:5;
+    hal_plot_led(TYPEPAD, i, 0, 0, v);
+  }
+
+  // light the note choice pads:
+  for(int j = 0; j<6;j++)
+    for(int i = 0; i<8; i++) {
+      u8 note = seq_ca_setup_note_root + i + j*5;
+      u8 r = 0;
+      u8 g = 0;
+      u8 b = 0;
+      if(note%12 == seq_ca_setup_note_root%12) { r = 32;b=32;}
+      if(note%12 == 0) {r=32; g = 32;}
+      if(note==MIDDLE_C) {r=MAXLED,g=b=0;}// for reference and orientation
+      if(note==seq_ca_rootNote[seq_ca_setup_inst]) {r=g=b=MAXLED;}// the current base note
+      hal_plot_led(TYPEPAD, (j+3)*10+i+1, r, g, b);
+    }
+}
+
+/**
+ * the TYPEPAD response for the seq_ca setup mode
+ * @param index - index of the button
+ * @param value - velocity of the button
+ */
+void seq_ca_setup_typepad(u8 index, u8 value) {
+  u8 i = index%10;
+  u8 j = index/10;
+  if((i>0) & (i<9) & (j>2) & (j<9)) {
+    u8 note = seq_ca_setup_note_root + (i-1) + (j-3)*5;
+    if(value != 0) {
+	//set note as root
+	seq_ca_rootNote[seq_ca_setup_inst] = note;
+    } else {
+      seq_ca_setup_init();
+    }
+  } else if((i>0) & (i<9) & (j>0) & (j<3)) { // lower two pad rows: set channel
+    seq_ca_channel[seq_ca_setup_inst] = (i-1) + 8*(j-1);
+    seq_ca_setup_init();
+  } else if(value) {
+    if(index<9) {
+      hal_plot_led(TYPEPAD,seq_ca_setup_inst+1 , 0, 0, 0);
+      seq_ca_setup_inst = index-1;
+      hal_plot_led(TYPEPAD,index , MAXLED, MAXLED, MAXLED);
+      seq_ca_setup_init();
+    } else
+    switch (index) {
+    case BUTTON_UP:
+      {
+	if(seq_ca_setup_note_root <=150) {
+	  seq_ca_setup_note_root+=5;
+	  seq_ca_setup_init();
+	}
+      }
+      break;
+    case BUTTON_DOWN:
+      {
+	if(seq_ca_setup_note_root>=5){
+	  seq_ca_setup_note_root-=5;
+	  seq_ca_setup_init();
+	}
+      }
+      break;
+    case BUTTON_LEFT:
+      {
+	if(seq_ca_setup_note_root>0) {
+	  seq_ca_setup_note_root-=1;
+	  seq_ca_setup_init();
+	}
+      }
+      break;
+    case BUTTON_RIGHT:
+      {
+	if(seq_ca_setup_note_root <155) {
+	  seq_ca_setup_note_root+=1;
+	  seq_ca_setup_init();
+	}
+      }
+      break;
+    }
+  }
+}
+
+
+//_________________________________________________
+//
 // NOTE mode
 //_________________________________________________
 //
@@ -323,6 +452,7 @@ void note_mode_init() {
       u8 b = 0;
       if(note%12 == note_root%12) { r = 32;b=32;}
       if(note%12 == 0) {r=32; g = 32;}
+      if(note==MIDDLE_C) {r=MAXLED,g=b=0;}//for reference and orientation
       hal_plot_led(TYPEPAD, (j+1)*10+i+1, r, g, b);
     }
 }
@@ -350,6 +480,7 @@ void note_typepad(u8 index, u8 value) {
       u8 b = 0;
       if(note%12 == note_root%12) { r = 32;b=32;}
       if(note%12 == 0) {r=32; g = 32;}
+      if(note==MIDDLE_C) {r=MAXLED,g=b=0;}// for reference and orientation
       hal_plot_led(TYPEPAD, index, r, g, b);
     }
     // update the LED:
@@ -358,26 +489,34 @@ void note_typepad(u8 index, u8 value) {
     switch (index) {
     case BUTTON_UP:
       {
-	note_root+=5;
-	note_mode_init();
+	if(note_root <=150) {
+	  note_root+=5;
+	  note_mode_init();
+	}
       }
       break;
     case BUTTON_DOWN:
       {
-	note_root-=5;
-	note_mode_init();
+	if(note_root>=5){
+	  note_root-=5;
+	  note_mode_init();
+	}
       }
       break;
     case BUTTON_LEFT:
       {
-	note_root-=1;
-	note_mode_init();
+	if(note_root>0) {
+	  note_root-=1;
+	  note_mode_init();
+	}
       }
       break;
     case BUTTON_RIGHT:
       {
-	note_root+=1;
-	note_mode_init();
+	if(note_root <155) {
+	  note_root+=1;
+	  note_mode_init();
+	}
       }
       break;
     }
@@ -390,7 +529,10 @@ void note_typepad(u8 index, u8 value) {
 //_________________________________________________
 //
 
-
+/**
+ * gets called every MIDI clock tick.
+ * Currently plays and updates the ca sequencer.
+ */
 void midiTick() {
   clocksteps = (clocksteps+1)%6;// 16th for now
   if(clocksteps == 0) { 
@@ -402,7 +544,10 @@ void midiTick() {
   }
 }
 
-
+/** 
+ * switches to the given mode
+ * @param m - the mode to switch to.
+ */
 void setMode(u8 m) {
   mode = m;
   switch (mode) {
@@ -422,13 +567,26 @@ void setMode(u8 m) {
 	case MODE_USER:
 	  {}
 	  break;
+	case MODE_SEQ_STEP_SETUP:
+	  {}
+	  break;
+	case MODE_NOTE_SETUP:
+	  {}
+	  break;
+	case MODE_SEQ_CA_SETUP:
+	  {
+	    seq_ca_setup_init();
+	  }
+	  break;
+	case MODE_USER_SETUP:
+	  {}
+	  break;
 	}
 }
-  
+
 //______________________________________________________________________________
 //
-// This is where the fun is!  Add your code to the callbacks below to define how
-// your app behaves.
+// This is where the button and pad presses are handled:
 //______________________________________________________________________________
 
 void app_surface_event(u8 type, u8 index, u8 value) {
@@ -436,9 +594,6 @@ void app_surface_event(u8 type, u8 index, u8 value) {
     {
     case  TYPEPAD:
       {
-	// example - light / extinguish pad LEDs, send MIDI
-	//hal_plot_led(TYPEPAD, index, value, value, value);
-	//hal_send_midi(DINMIDI, NOTEON | 0, index, value);
 	int i = index%10;
 	int j = index/10;
 	switch (mode) {
@@ -458,12 +613,17 @@ void app_surface_event(u8 type, u8 index, u8 value) {
 	case MODE_USER:
 	  {}
 	  break;
+	case MODE_SEQ_CA_SETUP:
+	  {
+	    seq_ca_setup_typepad(index,value);
+	  }
+	  break;
 	}
 	if((index >= BUTTON_SESSION) & !(buttonState[j]&(1<<i))) {
-	  if(mode != index) {
+	  if((mode &127)!= index) {
 	    hal_plot_led(TYPEPAD, mode, 0, 0, 0);
 	    hal_plot_led(TYPEPAD, index, MAXLED, MAXLED, MAXLED);
-	    setMode(index);
+	    setMode(index|(mode&128));
 	  }
 	}
 	// update the buttonState
@@ -473,14 +633,25 @@ void app_surface_event(u8 type, u8 index, u8 value) {
       
     case TYPESETUP: // switch to setup mode
       {
+	
 	// just light the LED  for now...
-	hal_plot_led(TYPESETUP, 0, value, value, value);
+	//buttonState[9] ^= (buttonState[9] ^ ((value?1:0)) ) & (1);
+	if(value) {
+	  mode ^=128;
+	  value = (mode&128)>>1;
+	  hal_plot_led(TYPESETUP, 0, value, value, value);
+	  setMode(mode);
+	}
       }
       break;
     }
 }
 
 //______________________________________________________________________________
+//
+// we keep the MIDI-USB conversion functionality for now and handle MIDI clock
+//______________________________________________________________________________
+//
 
 void app_midi_event(u8 port, u8 status, u8 d1, u8 d2)
 {
@@ -490,7 +661,7 @@ void app_midi_event(u8 port, u8 status, u8 d1, u8 d2)
 		hal_send_midi(DINMIDI, status, d1, d2);
 	}
 
-	// // example -MIDI interface functionality for DIN -> USB "MIDI" port port
+	// example -MIDI interface functionality for DIN -> USB "MIDI" port port
 	if (port == DINMIDI)
 	{
 		hal_send_midi(USBMIDI, status, d1, d2);
@@ -508,7 +679,7 @@ void app_midi_event(u8 port, u8 status, u8 d1, u8 d2)
 	  running = 0;
 	  }
 	  break;
-	case MIDITIMINGCLOCK:
+	case MIDITIMINGCLOCK: // handle MIDI clock ticks
 	  {
 	  midiTick();
 	  }
@@ -522,9 +693,12 @@ void app_midi_event(u8 port, u8 status, u8 d1, u8 d2)
 
 void app_sysex_event(u8 port, u8 * data, u16 count)
 {
-	// example - respond to UDI messages?
+	// no use for sysex sofar.
 }
 
+//______________________________________________________________________________
+//
+// in note mode send aftertouch messages
 //______________________________________________________________________________
 
 void app_aftertouch_event(u8 index, u8 value)
@@ -553,8 +727,10 @@ void app_cable_event(u8 type, u8 value)
 }
 
 //______________________________________________________________________________
-
-
+//
+// this will have to handle the internal clock - once it is implemented :)
+//______________________________________________________________________________
+//
 void app_timer_event()
 {
 	// example - send MIDI clock at 125bpm
@@ -572,7 +748,10 @@ void app_timer_event()
 }
 
 //______________________________________________________________________________
-
+//
+// nothing to initialize really at the moment...
+//______________________________________________________________________________
+//
 void app_init()
 {
   hal_plot_led(TYPEPAD, BUTTON_DEVICE, MAXLED, MAXLED, MAXLED);
@@ -596,10 +775,11 @@ void app_init()
     }
 }
 
-//________________________________________________________
+//______________________________________________________________________________
 //
 // helper for bitwise left and right rotation of u8 values
-//________________________________________________________
+//______________________________________________________________________________
+//
 
 u8 rotl8 (u8 value, unsigned int count) {
     const unsigned int mask = (CHAR_BIT*sizeof(value)-1);
@@ -613,14 +793,14 @@ u8 rotr8 (u8 value, unsigned int count) {
     return (value>>count) | (value<<( (-count) & mask ));
 }
 
-
-//________________________________________________________
+//______________________________________________________________________________
 //
 // totally naive and almost unusable rand -
 // still enough to pseudo-randomly fill the grid...
 // with some input from here:
 // http://www.electro-tech-online.com/threads/ultra-fast-pseudorandom-number-generator-for-8-bit.124249/
-//________________________________________________________
+//______________________________________________________________________________
+//
 
 u8 seed1 = 19;
 u8 seed2 = 93;

@@ -46,7 +46,7 @@ $(HEXTOSYX):
 	$(HOST_GPP) -Ofast -std=c++0x -I./$(TOOLS)/libintelhex/include ./$(TOOLS)/libintelhex/src/intelhex.cc $(TOOLS)/hextosyx.cpp -o $(HEXTOSYX)
 
 # build the simulator (it's a very basic test of the code before it runs on the device!)
-$(SIMULATOR):
+$(SIMULATOR): $(SOURCES)
 	$(HOST_GCC) -g3 -O0 -std=c99 -Iinclude $(TOOLS)/simulator.c $(SOURCES) -o $(SIMULATOR)
 
 $(HEX): $(ELF)
