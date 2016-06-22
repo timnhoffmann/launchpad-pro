@@ -31,6 +31,13 @@ void seq_ca_mode_init();
 void seq_ca_update(int t);
 
 /**
+ * Progress time for the ca sequencer.
+ * This sends out the notes and updates the ca state.
+ * @param t - the time. only t%2 matters though.
+ */
+void seq_ca_updateTime();
+
+/**
  * generates the pitch for the i-th instrument
  * @param i - the number of the instrument. 0<= i<8.
  */

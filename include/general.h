@@ -125,6 +125,24 @@ u8 getButtonStateIndex(u8 index);
 void setMode(u8 m);
 
 /**
+ * initializes the two bottom rows of pads to serve as MIDI channel selector
+ * @param currentChannel - the current MIDI channel (gets highlighted)
+ */
+void chooseMIDI_init(u8 currentChannel);
+
+/**
+ * returns whether the given index is in the bottom two rows of pads
+ * @param index - the index to check
+ */
+u8 isChooseMIDI(u8 index);
+
+/**
+ * returns the picked midichannel for the given index
+ * @param the index to check
+ */
+u8 chooseMIDI(u8 index);
+
+/**
  * bitwise rotate a u8 value to the left
  * @param value - the value to be rotated
  * @param count - the number of bits to rotate by

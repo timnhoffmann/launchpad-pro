@@ -38,7 +38,9 @@ void setMode(u8 m) {
 	  {}
 	  break;
 	case MODE_NOTE_SETUP:
-	  {}
+	  {
+	    note_setup_init();
+	  }
 	  break;
 	case MODE_SEQ_CA_SETUP:
 	  {
@@ -51,6 +53,38 @@ void setMode(u8 m) {
 	}
 }
 
+//______________________________________________________________________________
+//
+// helpers common for several modes
+//______________________________________________________________________________
+//
+
+void chooseMIDI_init(u8 currentChannel) {
+  // the Pad-no for the MIDI-channel
+  u8 mc = currentChannel;
+  mc = mc%8 +1 + (mc/8 +1)*10;
+  // light the channel choice pads:
+  for(int i = 11; i<19; i++) {
+    u8 v = i==mc?MAXLED:5;
+    hal_plot_led(TYPEPAD, i, 0, 0, v);
+  }
+  for(int i = 21; i<29; i++) {
+    u8 v = i==mc?MAXLED:5;
+    hal_plot_led(TYPEPAD, i, 0, 0, v);
+  }
+}
+
+u8 isChooseMIDI(u8 index) {
+  u8 i = index%10;
+  u8 j = index/10;
+  return (i>0) && (i<9) && (j>0) && (j<3);
+    }
+
+u8 chooseMIDI(u8 index) {
+  u8 i = index%10;
+  u8 j = index/10;
+  return (i-1) + 8*(j-1);
+}
 
 //______________________________________________________________________________
 //

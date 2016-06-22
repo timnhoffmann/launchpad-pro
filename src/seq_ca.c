@@ -67,7 +67,8 @@ u8 seq_ca_active = 0b11111111;
 // the bits that map to pitch
 u8 seq_ca_noteBits[8] = {0,0,0,0,0,0,255,255};
 
-
+// flag for double or single timestep
+u8 doubleTime = 1;
 
 u8 seq_ca_getBit(u8 i, u8 j) {
   return (u8) (slots[j] & (1<<i)) != 0?1:0;
@@ -111,6 +112,8 @@ void seq_ca_mode_init() {
     u8 v = ((seq_ca_active & (1<<(i))) != 0)? SEQ_CA_SCENE_BR:0;
     hal_plot_led(TYPEPAD, (i+1)*10+9, v, v, v);
   }
+  u8 v = doubleTime?MAXLED:0;
+  hal_plot_led(TYPEPAD, BUTTON_DOUBLE, v, v, v);
 }
 
 void seq_ca_update(int t) {
@@ -177,13 +180,11 @@ void seq_ca_play() {
       int c = 0; 
       for(int j = 0; j<SIZEM;j++) {
 	//int bit = (slots[j]>>>i) & 0b1;
-	c += (slots[i]>>j) & 0b1;  // TODO: we had here >>> (same for the palying >> below...)
+	c += (slots[i]>>j) & 0b1;  
       }
       int on = (c%2 == 1);
       if(on  & ! ( (playing >> i)%2 ==1) ) {
-	//	if(i>5) {
-	  seq_ca_noteNr[i] = seq_ca_makeNote(i);
-	  //	} else seq_ca_noteNr[i] = seq_ca_rootNote[i];
+	seq_ca_noteNr[i] = seq_ca_makeNote(i);
 	hal_send_midi(midiport, NOTEON | seq_ca_channel[i], seq_ca_noteNr[i], 16*c); // FIXEDV?96:16*c
 	if(mode == MODE_SEQ_CA)
 	  hal_plot_led(TYPEPAD, (i+1)*10+9, MAXLED, MAXLED, MAXLED);
@@ -195,16 +196,26 @@ void seq_ca_play() {
       }
     }
   }
+  if(mode == MODE_SEQ_CA) 
+    seq_ca_updateLEDs(); // make new state visible
+
 }
 
+
+void seq_ca_updateTime() {
+  seq_ca_play(); // send out notes
+  seq_ca_update(++time); // calculate next state...
+  if(doubleTime)
+    seq_ca_update(++time); //...twice...
+}
+  
 void seq_ca_typepad(u8 index, u8 value) {
   //  if (value == 0) return;
   // grid positions of the buttons
   u8 i = index%10;
   u8 j = index/10;
-  //  if((value!=0) & (i>0) & (i<9) & (j>0) & (j<9)) { // square button pressed:
-  //    if(!getButtonState(i,j)) { // the button is freshly pressed
-  if((i>0) && (i<9) && (j>0) && (j<9)) { // square button pressed:
+
+  if((i>0) && (i<9) && (j>0) && (j<9)) { // pad pressed:
     if(value != 0) { // the button is freshly pressed
       // 8x8 grid position
       --i;
@@ -223,8 +234,16 @@ void seq_ca_typepad(u8 index, u8 value) {
       u8 v = (seq_ca_active & 1<<i) !=0 ? 16:0;
       hal_plot_led(TYPEPAD, index, v, v, v);
       seq_ca_noteOff(i);
-    } else
+    } else // not a scene button
       switch (index) {
+      case BUTTON_DOUBLE: // double time
+	{
+	  doubleTime = !doubleTime;
+	  u8 v = (doubleTime?MAXLED:0);
+	  hal_plot_led(TYPEPAD, BUTTON_DOUBLE, v, v, v);
+	  return;
+	}
+	break;
       case BUTTON_DELETE: // clear the grid
 	{
 	  hal_plot_led(TYPEPAD, index, value, value, value);
@@ -335,7 +354,7 @@ void seq_ca_setup_init() {
       u8 r = 0;
       u8 g = 0;
       u8 b = 0;
-      if(note%12 == seq_ca_setup_note_root%12) { r = 32;b=32;}
+      //if(note%12 == seq_ca_setup_note_root%12) { r = 32;b=32;}
       if(note%12 == 0) {r=32; g = 32;}
       if(note==MIDDLE_C) {r=MAXLED,g=b=0;}// for reference and orientation
       if(note==seq_ca_rootNote[seq_ca_setup_inst]) {r=g=b=MAXLED;}// the current base note
@@ -353,7 +372,7 @@ void seq_ca_setup_init() {
 void seq_ca_setup_typepad(u8 index, u8 value) {
   u8 i = index%10;
   u8 j = index/10;
-  if((i>0) & (i<9) & (j>2) & (j<9)) {
+  if((i>0) && (i<9) && (j>2) && (j<9)) {
     if(value != 0) {
       //set note as root or set the noteBit:
       if(j==8) { // noteBit
@@ -365,7 +384,7 @@ void seq_ca_setup_typepad(u8 index, u8 value) {
     } else {
       seq_ca_setup_init();
     }
-  } else if((i>0) & (i<9) & (j>0) & (j<3)) { // lower two pad rows: set channel
+  } else if((i>0) && (i<9) && (j>0) && (j<3)) { // lower two pad rows: set channel
     // shut off possibly playing notes
     //TODO: maybe to make it bulletproof first deactivate the instrument (if active) and reactivate after change?
     seq_ca_noteOff(i);
@@ -382,32 +401,32 @@ void seq_ca_setup_typepad(u8 index, u8 value) {
     switch (index) {
     case BUTTON_UP:
       {
-	if(seq_ca_setup_note_root <=150) {
-	  seq_ca_setup_note_root+=5;
-	  seq_ca_setup_init();
-	}
-      }
-      break;
-    case BUTTON_DOWN:
-      {
 	if(seq_ca_setup_note_root>=5){
 	  seq_ca_setup_note_root-=5;
 	  seq_ca_setup_init();
 	}
       }
       break;
+    case BUTTON_DOWN:
+      {
+	if(seq_ca_setup_note_root <=150) {
+	  seq_ca_setup_note_root+=5;
+	  seq_ca_setup_init();
+	}
+      }
+      break;
     case BUTTON_LEFT:
       {
-	if(seq_ca_setup_note_root>0) {
-	  seq_ca_setup_note_root-=1;
+	if(seq_ca_setup_note_root <155) {
+	  seq_ca_setup_note_root+=1;
 	  seq_ca_setup_init();
 	}
       }
       break;
     case BUTTON_RIGHT:
       {
-	if(seq_ca_setup_note_root <155) {
-	  seq_ca_setup_note_root+=1;
+	if(seq_ca_setup_note_root>0) {
+	  seq_ca_setup_note_root-=1;
 	  seq_ca_setup_init();
 	}
       }
