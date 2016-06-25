@@ -114,6 +114,7 @@ void seq_ca_mode_init() {
   }
   u8 v = doubleTime?MAXLED:0;
   hal_plot_led(TYPEPAD, BUTTON_DOUBLE, v, v, v);
+  all_modes_init();
 }
 
 void seq_ca_update(int t) {
@@ -226,24 +227,30 @@ void seq_ca_typepad(u8 index, u8 value) {
     } //else hal_plot_led(TYPESETUP, 0, 0, 0, 0);
     // update the LED to reflect the bit state:
     seq_ca_updateLED(i,j);
-  } else if(value != 0) { //no pad and no release
-    if((index%10) == 9) { // a scene button:
+  } else if((index%10) == 9) { // a scene button:
+    if(value != 0) {
       int i = (index/10) - 1;
       //toggle the active state and adjudt the LED:
       seq_ca_active ^= 1<< i;
       u8 v = (seq_ca_active & 1<<i) !=0 ? 16:0;
       hal_plot_led(TYPEPAD, index, v, v, v);
       seq_ca_noteOff(i);
-    } else // not a scene button
+    }
+  } else if (index == BUTTON_DOUBLE && value != 0) { // button for time / double-time -- should not default to switching off in case of value==0
+    doubleTime = !doubleTime;
+    u8 v = (doubleTime?MAXLED:0);
+    hal_plot_led(TYPEPAD, BUTTON_DOUBLE, v, v, v);
+    return;
+  } else if(value !=0) {// not a scene button
       switch (index) {
-      case BUTTON_DOUBLE: // double time
-	{
-	  doubleTime = !doubleTime;
-	  u8 v = (doubleTime?MAXLED:0);
-	  hal_plot_led(TYPEPAD, BUTTON_DOUBLE, v, v, v);
-	  return;
-	}
-	break;
+      /* case BUTTON_DOUBLE: // double time */
+      /* 	{ */
+      /* 	  doubleTime = !doubleTime; */
+      /* 	  u8 v = (doubleTime?MAXLED:0); */
+      /* 	  hal_plot_led(TYPEPAD, BUTTON_DOUBLE, v, v, v); */
+      /* 	  return; */
+      /* 	} */
+      /* 	break; */
       case BUTTON_DELETE: // clear the grid
 	{
 	  hal_plot_led(TYPEPAD, index, value, value, value);
@@ -314,7 +321,10 @@ void seq_ca_typepad(u8 index, u8 value) {
 	}
 	break;
       }
-  } else hal_plot_led(TYPEPAD, index, 0,0,0);
+  } else // value == 0
+    hal_plot_led(TYPEPAD, index, 0,0,0);
+  //TODO should happen insdead of switching off for the relevant Buttons...
+  all_modes_typepad(index,value);
 }
 
 //_________________________________________________
@@ -335,17 +345,18 @@ void seq_ca_setup_init() {
   }
   
   // the Pad-no for the MIDI-channel
-  u8 mc = seq_ca_channel[seq_ca_setup_inst];
-  mc = mc%8 +1 + (mc/8 +1)*10;
-  // light the channel choice pads:
-  for(int i = 11; i<19; i++) {
-    u8 v = i==mc?MAXLED:5;
-    hal_plot_led(TYPEPAD, i, 0, 0, v);
-  }
-  for(int i = 21; i<29; i++) {
-    u8 v = i==mc?MAXLED:5;
-    hal_plot_led(TYPEPAD, i, 0, 0, v);
-  }
+  chooseMIDI_init(seq_ca_channel[seq_ca_setup_inst]);
+  /* u8 mc = seq_ca_channel[seq_ca_setup_inst]; */
+  /* mc = mc%8 +1 + (mc/8 +1)*10; */
+  /* // light the channel choice pads: */
+  /* for(int i = 11; i<19; i++) { */
+  /*   u8 v = i==mc?MAXLED:5; */
+  /*   hal_plot_led(TYPEPAD, i, 0, 0, v); */
+  /* } */
+  /* for(int i = 21; i<29; i++) { */
+  /*   u8 v = i==mc?MAXLED:5; */
+  /*   hal_plot_led(TYPEPAD, i, 0, 0, v); */
+  /* } */
 
   // light the note choice pads:
   for(int j = 0; j<5;j++)
@@ -367,6 +378,7 @@ void seq_ca_setup_init() {
     u8 v = ((noteBits & (1<<i)) != 0)?MAXLED:5;
     hal_plot_led(TYPEPAD, 81+i, 0, 0, v);
   }
+  all_modes_init();
 }
 
 void seq_ca_setup_typepad(u8 index, u8 value) {
@@ -384,15 +396,19 @@ void seq_ca_setup_typepad(u8 index, u8 value) {
     } else {
       seq_ca_setup_init();
     }
-  } else if((i>0) && (i<9) && (j>0) && (j<3)) { // lower two pad rows: set channel
-    // shut off possibly playing notes
-    //TODO: maybe to make it bulletproof first deactivate the instrument (if active) and reactivate after change?
+  } else if(isChooseMIDI(index)) {
     seq_ca_noteOff(i);
-    //change channel:
-    seq_ca_channel[seq_ca_setup_inst] = (i-1) + 8*(j-1);
-    seq_ca_setup_init();
+    seq_ca_channel[seq_ca_setup_inst] = chooseMIDI(index);
+    chooseMIDI_init(seq_ca_channel[seq_ca_setup_inst]);
+    /* if((i>0) && (i<9) && (j>0) && (j<3)) { // lower two pad rows: set channel */
+    /* // shut off possibly playing notes */
+    /* //TODO: maybe to make it bulletproof first deactivate the instrument (if active) and reactivate after change? */
+    /* seq_ca_noteOff(i); */
+    /* //change channel: */
+    /* seq_ca_channel[seq_ca_setup_inst] = (i-1) + 8*(j-1); */
+    /* seq_ca_setup_init(); */
   } else if(value) {
-    if(index%10 == 9) {
+    if(index%10 == 9) { // scene buttons select the instrument 1-8 to setup
       hal_plot_led(TYPEPAD,(seq_ca_setup_inst+1)*10, 0, 0, 0);
       seq_ca_setup_inst = (index/10)-1;
       hal_plot_led(TYPEPAD,index , MAXLED, MAXLED, MAXLED);
@@ -432,5 +448,6 @@ void seq_ca_setup_typepad(u8 index, u8 value) {
       }
       break;
     }
+    all_modes_typepad(index,value);
   } 
 }

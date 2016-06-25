@@ -39,6 +39,7 @@
 #include "general.h"
 #include "note.h"
 #include "seq_ca.h"
+#include "global_setup.h"
 
 //_________________________________________________
 //
@@ -96,6 +97,11 @@ void app_surface_event(u8 type, u8 index, u8 value) {
 	      seq_ca_setup_typepad(index,value);
 	    }
 	    break;
+	  case MODE_GLOBAL_SETUP:
+	    {
+	      global_setup_typepad(index, value);
+	    }
+	    break;
 	  }
 	} else {
 	  if(value>0) { // index >= BUTTON_SESSION:
@@ -115,14 +121,16 @@ void app_surface_event(u8 type, u8 index, u8 value) {
       
     case TYPESETUP: // switch to setup mode
       {
-	
-	// just light the LED  for now...
-	//buttonState[9] ^= (buttonState[9] ^ ((value?1:0)) ) & (1);
 	if(value) {
-	  mode ^=128;
-	  value = (mode&128)>>1;
-	  hal_plot_led(TYPESETUP, 0, value, value, value);
-	  setMode(mode);
+	  if(getButtonStateIndex(BUTTON_SHIFT)) {
+	    setMode(MODE_GLOBAL_SETUP);
+	  } else {
+	    mode ^=128;
+	    value = (mode&128)>>1;
+	    hal_plot_led(TYPESETUP, 0, value, value, value);
+	    if(mode == 0) mode = MODE_SEQ_CA;
+	    setMode(mode);
+	  }
 	}
       }
       break;
@@ -258,7 +266,10 @@ void app_init()
   clocksteps = 0;
   // tempo estimate in ms/beat
   tempo = 500; // 120 bpm
-  
+  bpmt = 1200; // 120 bpm
+
+
+  internalSync = 1;
   
   //hal_plot_led(TYPEPAD, BUTTON_DEVICE, MAXLED, MAXLED, MAXLED);
   

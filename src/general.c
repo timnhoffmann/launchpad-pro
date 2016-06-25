@@ -2,6 +2,8 @@
 #include "general.h"
 #include "note.h"
 #include "seq_ca.h"
+#include "global_setup.h"
+
 // store the pressed state of the buttons:
 u16 buttonState[10] = {0,0,0,0,0,0,0,0,0,0};
 
@@ -18,39 +20,44 @@ u8 getButtonStateIndex(u8 index) {
 void setMode(u8 m) {
   mode = m;
   switch (mode) {
-	case MODE_SEQ_STEP:
-	  {}
-	  break;
-	case MODE_NOTE:
-	  {
-	    note_mode_init();
-	  }
-	  break;
-	case MODE_SEQ_CA:
-	  {
-	    seq_ca_mode_init();
-	  }
-	  break;
-	case MODE_USER:
-	  {}
-	  break;
-	case MODE_SEQ_STEP_SETUP:
-	  {}
-	  break;
-	case MODE_NOTE_SETUP:
-	  {
-	    note_setup_init();
-	  }
-	  break;
-	case MODE_SEQ_CA_SETUP:
-	  {
-	    seq_ca_setup_init();
-	  }
-	  break;
-	case MODE_USER_SETUP:
-	  {}
-	  break;
-	}
+  case MODE_SEQ_STEP:
+    {}
+    break;
+  case MODE_NOTE:
+    {
+      note_mode_init();
+    }
+    break;
+  case MODE_SEQ_CA:
+    {
+      seq_ca_mode_init();
+    }
+    break;
+  case MODE_USER:
+    {}
+    break;
+  case MODE_SEQ_STEP_SETUP:
+    {}
+    break;
+  case MODE_NOTE_SETUP:
+    {
+      note_setup_init();
+    }
+    break;
+  case MODE_SEQ_CA_SETUP:
+    {
+      seq_ca_setup_init();
+    }
+    break;
+  case MODE_USER_SETUP:
+    {}
+    break;
+  case MODE_GLOBAL_SETUP:
+    {
+      global_setup_init();
+    }
+    break;
+  }
 }
 
 //______________________________________________________________________________
@@ -85,6 +92,26 @@ u8 chooseMIDI(u8 index) {
   u8 j = index/10;
   return (i-1) + 8*(j-1);
 }
+
+void all_modes_init() {
+  u8 v = internalSync?MAXLED:0;
+  hal_plot_led(TYPEPAD, BUTTON_CLICK, v, v, v);
+  v = playing?MAXLED:0;
+  hal_plot_led(TYPEPAD, BUTTON_CIRCLE, v, v, v);
+}
+
+void all_modes_typepad(u8 index, u8 value) {
+  if(value) {
+    if(index == BUTTON_CLICK) {
+      internalSync = !internalSync;
+      all_modes_init();
+    } else if(index == BUTTON_CIRCLE) {
+      playing = !playing;
+    }
+  }
+  all_modes_init();
+}
+
 
 //______________________________________________________________________________
 //

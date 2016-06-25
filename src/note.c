@@ -27,12 +27,12 @@ void note_mode_init() {
 }
 
 void note_aftertouch(u8 index, u8 value) {
-  u8 i = index%10;
-  u8 j = index/10;
-  if((i>0) && (i<9) && (j>0) && (j<9)) {
-    u8 note = note_root + (i-1) + (j-1)*5;
-    //hal_send_midi(midiport, POLYAFTERTOUCH | note_channel, note, value);
-  }
+  /* u8 i = index%10; */
+  /* u8 j = index/10; */
+  /* if((i>0) && (i<9) && (j>0) && (j<9)) { */
+  /*   u8 note = note_root + (i-1) + (j-1)*5; */
+  /*   hal_send_midi(midiport, POLYAFTERTOUCH | note_channel, note, value); */
+  /* } */
 }
 
 

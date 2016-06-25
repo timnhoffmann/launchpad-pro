@@ -23,13 +23,15 @@ EXT u8 midiport;
 EXT u8 mode;
 
 
+EXT u8  internalSync;
 EXT u8  playing;
 EXT u32 time;
 EXT u8  running;
 EXT u8  clocksteps;
 // tempo estimate in ms/beat
 EXT u32 tempo;
-
+// tempo in 10*BPM
+EXT u16 bpmt;
 // store the pressed state of the buttons:
 #ifndef GENERAL
 extern u16 buttonState[];
@@ -92,6 +94,7 @@ extern u16 buttonState[];
 #define MODE_NOTE_SETUP               BUTTON_NOTE|128
 #define MODE_SEQ_STEP_SETUP           BUTTON_SESSION|128
 #define MODE_USER_SETUP               BUTTON_USER|128
+#define MODE_GLOBAL_SETUP             128
 
 // your choice...
 #define MIDDLE_C                60
@@ -141,6 +144,10 @@ u8 isChooseMIDI(u8 index);
  * @param the index to check
  */
 u8 chooseMIDI(u8 index);
+
+void all_modes_init();
+
+void all_modes_typepad(u8 index, u8 value);
 
 /**
  * bitwise rotate a u8 value to the left
