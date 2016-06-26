@@ -61,6 +61,7 @@ void note_typepad(u8 index, u8 value) {
     }
     // update the LED:
     //    seq_ca_updateLED(i,j);
+    return;
   } else if(value) {
     switch (index) {
     case BUTTON_UP:
@@ -97,6 +98,7 @@ void note_typepad(u8 index, u8 value) {
       break;
     }
   }
+    all_modes_typepad(index,value);
 }
 
 void note_setup_init() {
@@ -124,5 +126,6 @@ void note_setup_typepad(u8 index, u8 value) {
   if((value!=0 ) && isChooseMIDI(index)) {
     note_channel = chooseMIDI(index);
     chooseMIDI_init(note_channel);
-  }
+  } else
+    all_modes_typepad(index,value);
 }

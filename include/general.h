@@ -24,7 +24,11 @@ EXT u8 mode;
 
 
 EXT u8  internalSync;
-EXT u8  playing;
+
+EXT u8  seq_step_running;
+
+EXT u8  seq_ca_running;
+
 EXT u32 time;
 EXT u8  running;
 EXT u8  clocksteps;

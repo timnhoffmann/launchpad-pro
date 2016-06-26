@@ -1,3 +1,6 @@
+#ifndef TIMING_H
+#define TIMING_H
+
 #include "app_defs.h"
 #include "general.h"
 
@@ -7,3 +10,5 @@
  * This function keeps track of milliSec ticks vs beats per minute and all that...
  */
 void msTick();
+
+#endif

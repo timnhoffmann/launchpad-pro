@@ -37,14 +37,27 @@ void seq_ca_update(int t);
  */
 void seq_ca_updateTime();
 
+/** 
+ * togglerunning state for seq_ca
+ */
+void seq_ca_toggle_running();
+
+/**
+ * note off for all seq_ca instruments
+ */
+void seq_ca_noteOff_all();
+
+/**
+ * note of for the given seq_ca instrument
+ * @param i - the instrument to silence.
+ */
+void seq_ca_noteOff(u8 i);
+
 /**
  * generates the pitch for the i-th instrument
  * @param i - the number of the instrument. 0<= i<8.
  */
 u8 makeNote(int i);
-
-void seq_ca_noteOff(u8 i);
-
 
 /**
  * Play the current state as midi notes.

@@ -47,6 +47,8 @@
 
 #define SEQ_CA_SCENE_BR  16
 
+//bits for playing instr
+u8 playing = 0; 
 // the ca bits
 u8 slots[8] = {0,0,0,0,0,0,0,0};
 
@@ -114,6 +116,8 @@ void seq_ca_mode_init() {
   }
   u8 v = doubleTime?MAXLED:0;
   hal_plot_led(TYPEPAD, BUTTON_DOUBLE, v, v, v);
+  v = seq_ca_running?MAXLED:0;
+  hal_plot_led(TYPEPAD, BUTTON_CIRCLE, v, v, v);
   all_modes_init();
 }
 
@@ -166,12 +170,29 @@ u8 seq_ca_makeNote(int i) {
   */
     }
 
+void seq_ca_toggle_running() {
+  seq_ca_running = !seq_ca_running;
+  u8 v = MAXLED;
+  if(!seq_ca_running) {
+    v = 0;
+    seq_ca_noteOff_all();
+  }
+  hal_plot_led(TYPEPAD, BUTTON_CIRCLE, v,v,v);
+}
+
+void seq_ca_noteOff_all() {
+  for(int i = 0; i<8; i++)
+    seq_ca_noteOff(i);
+}
+
 void seq_ca_noteOff(u8 i) {
   if( (playing >> i)%2 ==1) {
     hal_send_midi(midiport, NOTEON | seq_ca_channel[i], seq_ca_noteNr[i], 0);
     playing = (u8) (playing & (~(1<<i)));
-    if(mode == MODE_SEQ_CA)
-      hal_plot_led(TYPEPAD, (i+1)*10+9, SEQ_CA_SCENE_BR,SEQ_CA_SCENE_BR,SEQ_CA_SCENE_BR);
+    if(mode == MODE_SEQ_CA) {
+      u8 v = (seq_ca_active & 1<<i) ? SEQ_CA_SCENE_BR:0;
+      hal_plot_led(TYPEPAD, (i+1)*10+9, v,v,v);
+    }
   }
 }
 
@@ -204,12 +225,14 @@ void seq_ca_play() {
 
 
 void seq_ca_updateTime() {
-  seq_ca_play(); // send out notes
-  seq_ca_update(++time); // calculate next state...
-  if(doubleTime)
-    seq_ca_update(++time); //...twice...
+  if(seq_ca_running) {
+    seq_ca_play(); // send out notes
+    seq_ca_update(++time); // calculate next state...
+    if(doubleTime)
+      seq_ca_update(++time); //...twice...
+  }
 }
-  
+ 
 void seq_ca_typepad(u8 index, u8 value) {
   //  if (value == 0) return;
   // grid positions of the buttons
@@ -228,19 +251,23 @@ void seq_ca_typepad(u8 index, u8 value) {
     // update the LED to reflect the bit state:
     seq_ca_updateLED(i,j);
   } else if((index%10) == 9) { // a scene button:
-    if(value != 0) {
+    if(value) {
       int i = (index/10) - 1;
       //toggle the active state and adjudt the LED:
       seq_ca_active ^= 1<< i;
-      u8 v = (seq_ca_active & 1<<i) !=0 ? 16:0;
+      u8 v = (seq_ca_active & 1<<i) ? SEQ_CA_SCENE_BR:0;
       hal_plot_led(TYPEPAD, index, v, v, v);
       seq_ca_noteOff(i);
     }
-  } else if (index == BUTTON_DOUBLE && value != 0) { // button for time / double-time -- should not default to switching off in case of value==0
-    doubleTime = !doubleTime;
-    u8 v = (doubleTime?MAXLED:0);
-    hal_plot_led(TYPEPAD, BUTTON_DOUBLE, v, v, v);
-    return;
+  } else if (index == BUTTON_DOUBLE) { // button for time / double-time -- should not default to switching off in case of value==0
+    if(value) {
+      doubleTime = !doubleTime;
+      u8 v = (doubleTime?MAXLED:0);
+      hal_plot_led(TYPEPAD, BUTTON_DOUBLE, v, v, v);
+    }
+  } else if(index == BUTTON_CIRCLE) {
+    if(value)
+     seq_ca_toggle_running();
   } else if(value !=0) {// not a scene button
       switch (index) {
       /* case BUTTON_DOUBLE: // double time */
@@ -378,6 +405,9 @@ void seq_ca_setup_init() {
     u8 v = ((noteBits & (1<<i)) != 0)?MAXLED:5;
     hal_plot_led(TYPEPAD, 81+i, 0, 0, v);
   }
+  u8 v = seq_ca_running?MAXLED:0;
+  hal_plot_led(TYPEPAD, BUTTON_CIRCLE, v, v, v);
+ 
   all_modes_init();
 }
 
@@ -407,6 +437,9 @@ void seq_ca_setup_typepad(u8 index, u8 value) {
     /* //change channel: */
     /* seq_ca_channel[seq_ca_setup_inst] = (i-1) + 8*(j-1); */
     /* seq_ca_setup_init(); */
+  } else if(index == BUTTON_CIRCLE) {
+    if(value)
+     seq_ca_toggle_running();
   } else if(value) {
     if(index%10 == 9) { // scene buttons select the instrument 1-8 to setup
       hal_plot_led(TYPEPAD,(seq_ca_setup_inst+1)*10, 0, 0, 0);

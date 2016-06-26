@@ -39,7 +39,9 @@
 #include "general.h"
 #include "note.h"
 #include "seq_ca.h"
+#include "seq_step.h"
 #include "global_setup.h"
+#include "timing.h"
 
 //_________________________________________________
 //
@@ -55,6 +57,7 @@ void midiTick() {
   clocksteps = (clocksteps+1)%6;// 16th for now
   if(clocksteps == 0) { 
     seq_ca_updateTime();
+    seq_step_play();
   }
 }
 
@@ -72,7 +75,9 @@ void app_surface_event(u8 type, u8 index, u8 value) {
 	if(index < BUTTON_SESSION) {
 	  switch (mode) {
 	  case MODE_SEQ_STEP:
-	    {}
+	    {
+	      seq_step_typepad(index,value);
+	    }
 	    break;
 	  case MODE_NOTE:
 	    {
@@ -86,6 +91,11 @@ void app_surface_event(u8 type, u8 index, u8 value) {
 	    break;
 	  case MODE_USER:
 	    {}
+	    break;
+	    case MODE_SEQ_STEP_SETUP:
+	    {
+	      seq_step_setup_typepad(index,value);
+	    }
 	    break;
 	  case MODE_NOTE_SETUP:
 	    {
@@ -175,7 +185,8 @@ void app_midi_event(u8 port, u8 status, u8 d1, u8 d2)
 	      hal_plot_led(TYPESETUP, 0, MAXLED, 0, 0);
 	    if( clocksteps == 3)
 	      hal_plot_led(TYPESETUP, 0, 0, 0, 0);
-	    midiTick();
+	    if(!internalSync)
+	      midiTick();
 	  }
 	  break;
 	default:
@@ -228,6 +239,8 @@ void app_cable_event(u8 type, u8 value)
 //
 void app_timer_event()
 {
+  msTick();
+  
 	// example - send MIDI clock at 125bpm
 #define TICK_MS 20
 	
@@ -260,7 +273,9 @@ void app_init()
   midiport = USBMIDI;
   // the mode - can be MODE_SEQ_CA, MODE_SEQ_STEP, MODE_NOTES, MODE_USER
   mode = MODE_SEQ_CA;
-  playing = 0; // bits encode playing of notes...
+  seq_ca_running = 0;
+  seq_step_running = 0;
+  
   time = 0;
   running = 0;
   clocksteps = 0;
