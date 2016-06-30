@@ -196,7 +196,7 @@ void seq_ca_noteOff(u8 i) {
   }
 }
 
-void seq_ca_play() {
+void seq_ca_updateTime() {
   for(int i = 0; i<8; i++) {
     if(seq_ca_active & (1<<i)) {
       int c = 0; 
@@ -224,9 +224,9 @@ void seq_ca_play() {
 }
 
 
-void seq_ca_updateTime() {
+void seq_ca_play() {
   if(seq_ca_running) {
-    seq_ca_play(); // send out notes
+    seq_ca_updateTime(); // send out notes
     seq_ca_update(++time); // calculate next state...
     if(doubleTime)
       seq_ca_update(++time); //...twice...

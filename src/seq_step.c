@@ -83,6 +83,7 @@ void seq_step_mode_init() {
   seq_step_inst_select_init();
   u8 v = seq_step_running? MAXLED:0;
   hal_plot_led(TYPEPAD, BUTTON_CIRCLE, v,v,v);
+  all_modes_init();
 }
 
 void muteOrSelect(u8 index) {
@@ -242,4 +243,8 @@ void seq_step_play() {
     
     seq_step_play_pointer = (seq_step_play_pointer +1)%16;
   }
+}
+
+void seq_step_reset() {
+  seq_step_play_pointer = 0;
 }

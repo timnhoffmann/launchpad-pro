@@ -43,25 +43,6 @@
 #include "global_setup.h"
 #include "timing.h"
 
-//_________________________________________________
-//
-// general stuff
-//_________________________________________________
-//
-
-/**
- * gets called every MIDI clock tick.
- * Currently plays and updates the ca sequencer.
- */
-void midiTick() {
-  clocksteps = (clocksteps+1)%6;// 16th for now
-  if(clocksteps == 0) { 
-    seq_ca_updateTime();
-    seq_step_play();
-  }
-}
-
-
 //______________________________________________________________________________
 //
 // This is where the button and pad presses are handled:
@@ -169,23 +150,21 @@ void app_midi_event(u8 port, u8 status, u8 d1, u8 d2)
 
 	switch(status) {
 	case MIDISTART:
+	  {
+	    midiStart();
+	  }
 	case MIDICONTINUE:
 	  {
-	  running = 1;
+	    midiContinue();
 	  }
 	  break;
 	case MIDISTOP:
 	  {
-	  running = 0;
+	    midiStop();
 	  }
 	  break;
 	case MIDITIMINGCLOCK: // handle MIDI clock ticks
 	  {
-	    if( clocksteps == 5)
-	      hal_plot_led(TYPESETUP, 0, MAXLED, 0, 0);
-	    if( clocksteps == 3)
-	      hal_plot_led(TYPESETUP, 0, 0, 0, 0);
-	    if(!internalSync)
 	      midiTick();
 	  }
 	  break;
@@ -277,14 +256,14 @@ void app_init()
   seq_step_running = 0;
   
   time = 0;
-  running = 0;
-  clocksteps = 0;
+
   // tempo estimate in ms/beat
   tempo = 500; // 120 bpm
-  bpmt = 1200; // 120 bpm
+
+  setInternalSync(1);
+  setBPMtt(1250); // 125 bpm
 
 
-  internalSync = 1;
   
   //hal_plot_led(TYPEPAD, BUTTON_DEVICE, MAXLED, MAXLED, MAXLED);
   

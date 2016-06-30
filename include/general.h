@@ -30,12 +30,11 @@ EXT u8  seq_step_running;
 EXT u8  seq_ca_running;
 
 EXT u32 time;
-EXT u8  running;
-EXT u8  clocksteps;
+//EXT u8  running;
 // tempo estimate in ms/beat
 EXT u32 tempo;
 // tempo in 10*BPM
-EXT u16 bpmt;
+EXT u32 bpmtt;
 // store the pressed state of the buttons:
 #ifndef GENERAL
 extern u16 buttonState[];

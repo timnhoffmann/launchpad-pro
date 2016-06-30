@@ -68,5 +68,9 @@ void seq_step_noteOff(u8 i);
  */
 void seq_step_play();
 
+/**
+ * sets playing from start of pattern
+ */
+void seq_step_reset();
 
 #endif

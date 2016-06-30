@@ -35,7 +35,7 @@ void seq_ca_update(int t);
  * This sends out the notes and updates the ca state.
  * @param t - the time. only t%2 matters though.
  */
-void seq_ca_updateTime();
+void seq_ca_play();
 
 /** 
  * togglerunning state for seq_ca
@@ -62,7 +62,7 @@ u8 makeNote(int i);
 /**
  * Play the current state as midi notes.
  */
-void seq_ca_play();
+void seq_ca_updateTime();
 
 /**
  * the TYPEPAD response for the SEQ_CA mode
