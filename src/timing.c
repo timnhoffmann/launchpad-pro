@@ -7,6 +7,7 @@
 #define DIVIDER 48
 // number of seqTicks per 16th
 #define SIXTEENTH 12
+#define SIXTEENTH_4 = 3;
 // number of seqTicks per MIDI clock tick
 #define CLOCKTEENTH 2
 
@@ -19,7 +20,7 @@ s32 msTc = 0;
 // the number of ms per seqTick
 u32 msPerSeqTick = 0;
 // fractional part of that.
-s32 msPerSeqTickFrac = 0;
+u32 msPerSeqTickFrac = 0;
 
 // stores the current /running fractional part for better timing in internal sync mode
 s32 frac = 0;
@@ -37,26 +38,32 @@ s32 drift = 0;
 // incremets per msTick to estimate bpm from MIDI clock:
 u32  msPerMidiTc = 0;
 
+// bpm times 1000 for better estimate...
+u32 bpmth = 0;
+
 void msTick() {
   if((seq_step_running || seq_ca_running) && (internalSync || midiRunning)) {
     
     if(msTc >= 0) {
       msTc -= msPerSeqTick;
 
-      if(internalSync) {
-	frac += msPerSeqTickFrac;
-	if(frac>stpmtt/2) {
-	  frac -= stpmtt;
+      frac += msPerSeqTickFrac;
+      if(frac>=stpmtt) {
+	frac -= stpmtt;
+	if(internalSync) {
 	  msTc--;
 	}
-       }
-      
-      if(seqTc >= 0) {
-	seq_ca_play();
-	seq_step_play();
-	seqTc = -(SIXTEENTH);
       }
+      
+      if(seqTc%3 == 0) {
+	u8 r = seqTc/3; 
+	seq_ca_play(r);
+	seq_step_play(r);
+	}
       seqTc++;
+      if(seqTc == SIXTEENTH) {
+	seqTc = 0;
+      }
     }
 
     // increment all the counters
@@ -95,8 +102,9 @@ void midiTick() {
     // set the new estimate of ms per seqTicks:
     msPerSeqTick = (tmp)/(CLOCKTEENTH*c);
     
-    // estimate (and set) the bpm we are recieving
-    bpmtt=(600*1000*CLOCKTEENTH*c)/ (DIVIDER*tmp);
+    // estimate (and set) the bpm we are receiving
+    bpmth=(60000*1000*CLOCKTEENTH*c) / (DIVIDER*tmp);
+    bpmtt=(600*1000*CLOCKTEENTH*c) / (DIVIDER*tmp);
     
   }
 }
@@ -106,23 +114,34 @@ void setInternalSync(u8 intSync) {
     internalSync = intSync;
     msTc = 0;
     frac = 0;
-
+    if(internalSync) {
+      setMSperDIV();
+    } else {
+      drift = 0;
+    }
     //setMSperDIV();
   }
 }
 
 void setMSperDIV() {
+  /*
     stpmtt = bpmtt*DIVIDER;
     // milliseconds per sequencer tick:
     msPerSeqTick = ((600*1000)/stpmtt);
     msPerSeqTickFrac = ((600*1000)%stpmtt);
+  */
+    stpmtt = bpmth*DIVIDER;
+    // milliseconds per sequencer tick:
+    msPerSeqTick = ((60000*1000)/stpmtt);
+    msPerSeqTickFrac = ((60000*1000)%stpmtt);
+
     frac = 0;
 }
 
 
 void setBPMtt(u32 bpmTt) {
   bpmtt = bpmTt;
-  
+  bpmth = 100*bpmTt;
   if(internalSync)
     setMSperDIV();
 }

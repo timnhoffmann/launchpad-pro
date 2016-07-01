@@ -65,8 +65,9 @@ void seq_step_noteOff(u8 i);
 
 /**
  * the seq_step sequencer play routine. called for every step.
+ * @param frac - the sub-step count - should be 0<= frac<4
  */
-void seq_step_play();
+void seq_step_play(u8 frac);
 
 /**
  * sets playing from start of pattern

@@ -33,9 +33,9 @@ void seq_ca_update(int t);
 /**
  * Progress time for the ca sequencer.
  * This sends out the notes and updates the ca state.
- * @param t - the time. only t%2 matters though.
+ * @param frac - the sub-step count - should be 0<= frac<4
  */
-void seq_ca_play();
+void seq_ca_play(u8 frac);
 
 /** 
  * togglerunning state for seq_ca

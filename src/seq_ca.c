@@ -224,8 +224,9 @@ void seq_ca_updateTime() {
 }
 
 
-void seq_ca_play() {
-  if(seq_ca_running) {
+void seq_ca_play(u8 frac) {
+  
+  if((frac == 0) && seq_ca_running) {
     seq_ca_updateTime(); // send out notes
     seq_ca_update(++time); // calculate next state...
     if(doubleTime)

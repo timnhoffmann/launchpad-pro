@@ -10,6 +10,7 @@ u8 seq_step_active = 0b11111111;
 
 // holds the currently playing note
 s8 seq_step_playing[8];
+s8 seq_step_playing_dur[8];
 
 // pitches for 8 instruments on 16 steps
 u8 seq_step_notes[8][16];
@@ -220,28 +221,39 @@ void seq_step_noteOff(u8 i) {
   if(seq_step_playing[i] >=0) {
     hal_send_midi(midiport, NOTEON | seq_step_channel[i], seq_step_playing[i], 0);
     seq_step_playing[i] = -1;
+    seq_step_playing_dur[i] = 0;
     //        if(mode == MODE_SEQ_STEP)
     //          hal_plot_led(TYPEPAD, (i+1)*10+9, SEQ_CA_SCENE_BR,SEQ_CA_SCENE_BR,SEQ_CA_SCENE_BR);
   }
   
 }
 
-void seq_step_play() {
-  if(seq_step_running) {
+void seq_step_play(u8 frac) {
+  if( seq_step_running) {
     for(int j = 0; j<8;j++) { // each instrument
       if(seq_step_active &(1<<j)) { // inst active
-	if(seq_step_playing[j] >=0) // switch off old notes
-	  hal_send_midi(midiport, NOTEON | seq_step_channel[j], seq_step_playing[j], 0);
-	if(seq_step_mute_state[j] &  1<<seq_step_play_pointer) { // play note if not muted
-	  seq_step_playing[j] = seq_step_notes[j][seq_step_play_pointer];
-	  hal_send_midi(midiport, NOTEON | seq_step_channel[j], seq_step_playing[j], seq_step_velocities[j][seq_step_play_pointer]);
+	if(seq_step_playing_dur[j] > 0) { // old note playing?
+	  if(seq_step_playing_dur[j] ==1) // switch off old notes?
+	    hal_send_midi(midiport, NOTEON | seq_step_channel[j], seq_step_playing[j], 0);
+	  seq_step_playing_dur[j]--;
 	}
       }
     }
-    if(mode == MODE_SEQ_STEP) // show playing step:
-      seq_step_step_display_init();
-    
-    seq_step_play_pointer = (seq_step_play_pointer +1)%16;
+    if(frac == 0) {
+      for(int j = 0; j<8;j++) { // each instrument
+	if(seq_step_active &(1<<j)) { // inst active
+	  if(seq_step_mute_state[j] &  1<<seq_step_play_pointer) { // play note if not muted
+	    seq_step_playing[j] = seq_step_notes[j][seq_step_play_pointer];
+	    seq_step_playing_dur[j] = 2;//seq_step_notes_dur[j][seq_step_play_pointer];
+	    hal_send_midi(midiport, NOTEON | seq_step_channel[j], seq_step_playing[j], seq_step_velocities[j][seq_step_play_pointer]);
+	  }
+	}
+      }
+      if(mode == MODE_SEQ_STEP) // show playing step:
+	seq_step_step_display_init();
+      
+      seq_step_play_pointer = (seq_step_play_pointer +1)%16;
+    }
   }
 }
 
