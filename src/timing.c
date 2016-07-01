@@ -167,3 +167,7 @@ void midiStop() {
   //for(int i = 0; i<24;i++) measurements[i] = 0;
   //  }
 }
+
+u8 timingRoundOff() {
+  return ((seqTc +((msTc > -msPerSeqTick/2) ? 1 : 0) )%SIXTEENTH)/3;
+}

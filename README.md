@@ -5,8 +5,11 @@ This is a still rather experimental sequencer running on the launchpad pro. This
 Currently the system has three modes accessed by the upper right buttons "Session", "Note", and "Device".
 ### Step sequencer (Session)
 This mode gives a 8 instrument and 16 step sequencer.
-- CLick: switches between internal clock and sync to MIDI-clock (globally)
+- Click: switches between internal clock and sync to MIDI-clock (globally)
 - Circle: start or stop the sequencer.
+- Delete: erases all notes for the current instrument
+- Double: resets the step sequencer to 1st step
+- Record arm: toggles the record mode. This allows the current instrument to have its steps recorded in realtime (still kind of experimental - might behave weirdly if more than one note is played etc...)
 - pressing one of the scene Arrows (right): mute or unmute an instrument.
 - holding Track select and pressing one of the scene Arrows (right): select an instrument (for step editing).
 - the lower two pad rows (blue): select a step.

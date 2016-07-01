@@ -48,4 +48,10 @@ void midiContinue();
  */
 void midiStop();
 
+/** 
+ * returns the nearest Sequencer tick/call
+ */
+u8 timingRoundOff();
+
+
 #endif

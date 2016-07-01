@@ -8,6 +8,11 @@
 void seq_step_step_display_init();
 
 /**
+ * displays the length of the current step
+ */
+void seq_step_length_display_init();
+
+/**
  * step for index
  * @param - index the index to calculate the step from
  */
@@ -74,4 +79,19 @@ void seq_step_play(u8 frac);
  */
 void seq_step_reset();
 
+/**
+ * delete all notes for the given instrument
+ * @param inst - the instrument
+ */
+void seq_step_delete_one(u8 inst);
+
+/**
+ * delete all notes for all instruments
+ */
+void seq_step_delete_all();
+
+/**
+ * toggle recording state
+ */
+void seq_step_toggle_recording();
 #endif

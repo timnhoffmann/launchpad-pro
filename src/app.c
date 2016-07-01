@@ -263,10 +263,11 @@ void app_init()
   // tempo estimate in ms/beat
   tempo = 500; // 120 bpm
 
-  setBPMtt(1250); // 125 bpm
+  setBPMtt(1200); // 125 bpm
   setInternalSync(1);
 
-
+  seq_step_delete_all();
+    
   
   //hal_plot_led(TYPEPAD, BUTTON_DEVICE, MAXLED, MAXLED, MAXLED);
   
