@@ -2,6 +2,7 @@
 #include "app.h"
 #include "general.h"
 #include "timing.h"
+#include "colors.h"
 // midi channel per instrument
 u8 seq_step_channel[8] = {2,2,2,2,2,2,2,2};
 
@@ -69,6 +70,7 @@ void seq_step_note_display_init() {
   for(int j = 0; j<6;j++)
     for(int i = 0; i<8; i++) {
       u8 note = seq_step_note_root + i + j*5;
+      /*
       u8 r = 0;
       u8 g = 0;
       u8 b = 0;
@@ -76,6 +78,16 @@ void seq_step_note_display_init() {
       if(note==MIDDLE_C) {r=MAXLED,g=b=0;}// for reference and orientation
       if(note==seq_step_notes[currentInstrument][currentStep]) {r=g=b=MAXLED;}// the current note
       hal_plot_led(TYPEPAD, (j+3)*10+i+1, r, g, b);
+      */
+      u8* c = black;
+
+      if(note%12 == 0)
+	c = note_c;
+      if(note==MIDDLE_C) // for reference and orientation
+	c = note_middle_c;
+      if(note==seq_step_notes[currentInstrument][currentStep]) // the current note
+	c = note_playing;
+      hal_plot_led(TYPEPAD, (j+3)*10+i+1, COLOR(c));
     }
 }
 

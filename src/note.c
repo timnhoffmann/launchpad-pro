@@ -1,6 +1,6 @@
 
 #include "note.h"
-
+#include "colors.h"
 //_________________________________________________
 //
 // NOTE mode
@@ -15,6 +15,7 @@ void note_mode_init() {
     hal_plot_led(TYPEPAD, (j+1)*10+9, 0, 0, 0);
     for(int i = 0; i<8; i++) {
       u8 note = note_root + i + j*5;
+      /*
       u8 r = 0;
       u8 g = 0;
       u8 b = 0;
@@ -22,6 +23,14 @@ void note_mode_init() {
       if(note%12 == 0) {r=32; g = 32;}
       if(note==MIDDLE_C) {r=MAXLED,g=b=0;}//for reference and orientation
       hal_plot_led(TYPEPAD, (j+1)*10+i+1, r, g, b);
+      */
+      u8* c = black;
+
+      if(note%12 == 0)
+	c = note_c;
+      if(note==MIDDLE_C) // for reference and orientation
+	c = note_middle_c;
+      hal_plot_led(TYPEPAD, (j+1)*10+i+1, COLOR(c));
     }
   }
 }
@@ -51,6 +60,7 @@ void note_typepad(u8 index, u8 value) {
     } else {
       //      hal_plot_led(TYPESETUP, 0, MAXLED, 0, 0);
       hal_send_midi(midiport, NOTEON | note_channel, note, 0);
+      /*
       u8 r = 0;
       u8 g = 0;
       u8 b = 0;
@@ -58,6 +68,16 @@ void note_typepad(u8 index, u8 value) {
       if(note%12 == 0) {r=32; g = 32;}
       if(note==MIDDLE_C) {r=MAXLED,g=b=0;}// for reference and orientation
       hal_plot_led(TYPEPAD, index, r, g, b);
+      */
+      u8* c = black;
+
+      if(note%12 == 0)
+	c = note_c;
+      if(note==MIDDLE_C) // for reference and orientation
+	c = note_middle_c;
+      //if(note==seq_ca_rootNote[seq_ca_setup_inst]) // the current base note
+      //   c = note_playing;
+      hal_plot_led(TYPEPAD, index, COLOR(c));
     }
     // update the LED:
     //    seq_ca_updateLED(i,j);

@@ -13,17 +13,17 @@ This mode gives a 8 instrument and 16 step sequencer.
 - pressing one of the scene Arrows (right): mute or unmute an instrument.
 - holding Track select and pressing one of the scene Arrows (right): select an instrument (for step editing).
 - the lower two pad rows (blue): select a step.
-- pad rows 3-8: select the note for the instrument and step. The note C is highlighted in yellow and middle C in red for orientation. This grid can be shifted around with the arrow buttons (upper left). The velocity of the step is recorded.
+- pad rows 3-8: select the note for the instrument and step. The note C is highlighted in magenta and middle C in yellow for orientation. This grid can be shifted around with the arrow buttons (upper left). The velocity of the step is recorded.
 - the lower two pad rows (blue) while holding "Mute": mute a step.
 
 ### "Piano-grid" (Note)
-A playable (velocity sensitive) note grid. The spacing is halfsteps to the sides and 4th up and down. The notes C are highlighted in yellow and middle C in red for orientation. The grid can be shifted around with the arrow buttons (upper left). 
+A playable (velocity sensitive) note grid. The spacing is halfsteps to the sides and 4th up and down. The notes C are highlighted in magenta and middle C in yellow for orientation. The grid can be shifted around with the arrow buttons (upper left). 
 
 Pressing "setup" (upper left corner) will enter the setup mode. Then
 - lower two pad rows (blue): select the MIDI channel for the istrument.
 
 ### CA sequencer (Device)
-- CLick: switches between internal clock and sync to MIDI-clock (globally)
+- Click: switches between internal clock and sync to MIDI-clock (globally)
 - Undo: reverse time
 - Delete: clear the grid
 - Quantize: fill (pseudo-) randomly
@@ -31,11 +31,11 @@ Pressing "setup" (upper left corner) will enter the setup mode. Then
 - Double: a sequencer tick is a half or two half-timesteps.
 - circle: start or stop the sequencer.
 - Arrows (upper left): shift the pattern (cyclically) on the grid.
-- scene arrows (right): mute or unmute the 8 instruments
+- scene arrows (triangles right): mute or unmute the 8 instruments. They are off when muted, dimmly lit when active, and fully lit when playing a note.
 
 pressing "setup" (upper left corner) will enter the setup mode. Here one can -- after selecting an instrument with the scene arrows (right) --
 - lower two pad rows (blue): select the MIDI channel for the istrument.
-- pad rows 3-7: select the (base) note for the instrument. The note C is highlighted in yellow and middle C in red for orientation. This grid can be shifted around with the arrow buttons (upper left).
+- pad rows 3-7: select the (base) note for the instrument. The note C is highlighted in magenta and middle C in yellow for orientation. This grid can be shifted around with the arrow buttons (upper left).
 - upper pad row (blue): set which of the "bits" or cells in the ca pattern in the row of the selected instrument alter the pitch. If all of them are deselected the instrument will only play the base note. If switched on the cells will add (form left to right) -12, 12, 7, 5, 3, 2, 2, and 1 resp. whenever the corresponding cells are light when the instrument plays.
 ## global setup
 Pressing setup while holding shift opens a global setup page.
