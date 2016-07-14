@@ -78,7 +78,7 @@ u8 seq_ca_getBit(u8 i, u8 j) {
   return (u8) (slots[j] & (1<<i)) != 0?1:0;
 }
 
-// update a single LED indices are 0..7 x 8..7
+// update a single LED indices are 0..7 x 0..7
 
 void seq_ca_updateLED(u8 i, u8 j) {
   u8 index = (j+1)*10 + i +1;
@@ -94,7 +94,6 @@ void seq_ca_updateLEDs() {
       seq_ca_updateLED(i,j);
     }
 }
-
 
 void seq_ca_clear() {
   for(int i = 0; i<SIZEM; i++)
@@ -213,19 +212,17 @@ void seq_ca_updateTime() {
     if(seq_ca_active & (1<<i)) {
       int c = 0; 
       for(int j = 0; j<SIZEM;j++) {
-	//int bit = (slots[j]>>>i) & 0b1;
 	c += (slots[i]>>j) & 0b1;  
       }
       int on = (c%2 == 1);
       if(on  & ! ( (playing >> i)%2 ==1) ) {
 	seq_ca_noteNr[i] = seq_ca_makeNote(i);
-	hal_send_midi(midiport, NOTEON | seq_ca_channel[i], seq_ca_noteNr[i], 16*c); // FIXEDV?96:16*c
+	// c can be between 1 ans 7 - velocity can be up to 127: so 18*c+1
+	hal_send_midi(midiport, NOTEON | seq_ca_channel[i], seq_ca_noteNr[i], 18*c+1); // FIXEDV?96:16*c
 	if(mode == MODE_SEQ_CA)
 	  hal_plot_led(TYPEPAD, (i+1)*10+9, INST_PLAYING);
 	playing =(u8) (playing | (1<<i));
-      } else if((!on) /*&  ( (playing >> i)%2 ==1) */) {
-	//	hal_send_midi(midiport, NOTEON | seq_ca_channel[i], seq_ca_noteNr[i], 0);
-	//	playing = (u8) (playing & (~(1<<i)));
+      } else if((!on) ) {
 	seq_ca_noteOff(i);
       }
     }
@@ -247,7 +244,6 @@ void seq_ca_play(u8 frac) {
 }
  
 void seq_ca_typepad(u8 index, u8 value) {
-  //  if (value == 0) return;
   // grid positions of the buttons
   u8 i = index%10;
   u8 j = index/10;
@@ -259,10 +255,9 @@ void seq_ca_typepad(u8 index, u8 value) {
       --j;
       // toggle the bit in the CA
       slots[j] ^= 1<<i;
-      //hal_plot_led(TYPESETUP, 0, MAXLED, 0, 0);
-    } //else hal_plot_led(TYPESETUP, 0, 0, 0, 0);
     // update the LED to reflect the bit state:
     seq_ca_updateLED(i,j);
+    }
   } else if((index%10) == 9) { // a scene button:
     if(value) {
       int i = (index/10) - 1;
@@ -274,88 +269,69 @@ void seq_ca_typepad(u8 index, u8 value) {
   } else if (index == BUTTON_DOUBLE) { // button for time / double-time -- should not default to switching off in case of value==0
     if(value) {
       doubleTime = !doubleTime;
-      doubleTime ? hal_plot_led(TYPEPAD, BUTTON_DOUBLE, BUTTON_ON) : hal_plot_led(TYPEPAD, BUTTON_DOUBLE, BUTTON_ON);
+      doubleTime ? hal_plot_led(TYPEPAD, BUTTON_DOUBLE, BUTTON_ON) : hal_plot_led(TYPEPAD, BUTTON_DOUBLE, BUTTON_OFF);
     }
   } else if(index == BUTTON_CIRCLE) {
     if(value)
      seq_ca_toggle_running();
   } else if(value !=0) {// not a scene button
       switch (index) {
-      /* case BUTTON_DOUBLE: // double time */
-      /* 	{ */
-      /* 	  doubleTime = !doubleTime; */
-      /* 	  u8 v = (doubleTime?MAXLED:0); */
-      /* 	  hal_plot_led(TYPEPAD, BUTTON_DOUBLE, v, v, v); */
-      /* 	  return; */
-      /* 	} */
-      /* 	break; */
       case BUTTON_DELETE: // clear the grid
 	{
 	  hal_plot_led(TYPEPAD, index, BUTTON_ON);
-	  //	if(!getButtonState(i,j))
 	  seq_ca_clear();
 	}
 	break;
       case BUTTON_QUANTIZE: // fill randomly
 	{
 	  hal_plot_led(TYPEPAD, index, BUTTON_ON);
-	  //	if(!getButtonState(i,j))
 	  seq_ca_random();
 	}
 	break;
       case BUTTON_UNDO: // reverse time
 	{
 	  hal_plot_led(TYPEPAD, index, BUTTON_ON);
-	  //	if(!getButtonState(i,j))
 	  time++;
 	}
 	break;
       case BUTTON_UP: // shifts pattern up
 	{
 	  hal_plot_led(TYPEPAD, index, BUTTON_ON);
-	  //	if(!getButtonState(i,j)) {
 	  u8 tmp = slots[SIZEM-1];
 	  for(int i = SIZEM-1; i>0;--i)
 	    slots[i] = slots[i-1];
 	  slots[0] = tmp;
 	  seq_ca_updateLEDs();
 	  time++;
-	  //	}
 	}
 	break;
       case BUTTON_DOWN: // shifts pattern down
 	{
 	  hal_plot_led(TYPEPAD, index, BUTTON_ON);
-	  //	if(!getButtonState(i,j)) {
 	  u8 tmp = slots[0];
 	  for(int i = 0; i<SIZEM-1;++i)
 	    slots[i] = slots[i+1];
 	  slots[SIZEM-1] = tmp;
 	  seq_ca_updateLEDs();
 	  time++;
-	  //	  }
 	}
 	break;
       case BUTTON_LEFT: // shifts pattern left
 	{
 	  hal_plot_led(TYPEPAD, index, BUTTON_ON);
-	  //	if(!getButtonState(i,j)) {
 	  for(int i = 0; i<SIZEM;i++)
 	    slots[i] = rotr8(slots[i],1);
 	  seq_ca_updateLEDs();
 	  time++;
-	  //	}
 	}
 	break;
       case BUTTON_RIGHT: // shifts pattern right
 	{
 	  hal_plot_led(TYPEPAD, index, BUTTON_ON);
-	  //	if(!getButtonState(i,j)) {
 	  for(int i = 0; i<SIZEM;i++)
 	    slots[i] = rotl8(slots[i],1);
 	  seq_ca_updateLEDs();
 	  time++;
-	  //	}
 	}
 	break;
       }

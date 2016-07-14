@@ -111,10 +111,17 @@ void all_modes_typepad(u8 index, u8 value) {
       internalSync = !internalSync;
       all_modes_init();
     } else if(index == BUTTON_CIRCLE && getButtonStateIndex(BUTTON_SHIFT)) {
+        if(seq_ca_running)
+	  seq_ca_toggle_running();
+	if(seq_step_running)
+	  seq_step_toggle_running();
+	setMode(mode);
+	/*
 	if(seq_ca_running || seq_step_running) {
 	  seq_ca_running = seq_step_running = 0;
 	  setMode(mode);
 	}
+	*/
     }
   }
   all_modes_init();

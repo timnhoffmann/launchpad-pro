@@ -40,15 +40,19 @@ typedef u8 color[3];
 #define INST_CURRENT 63, 63, 63
 #define INST_SELECT 0, 0, 16
 
-#define NOTE_C 16, 0, 16
-#define NOTE_MIDDLE_C 32, 16, 0
-#define NOTE_PLAYING 63, 63, 63
+#define NOTE_C 48, 16, 0
+#define NOTE_MIDDLE_C 0, 32, 63
+#define NOTE_PLAYING 16, 63, 0
 
 // note bits for seq_ca_setup upper row:
 #define NOTEBIT_OFF 0, 0, 5
 #define NOTEBIT_ON 0, 0, 63
 
-
+// seq step step display
+#define STEP_CURRENT 48, 16, 0
+#define STEP_SELECTED 16, 63, 0
+#define STEP_ACTIVE 0, 32, 63
+#define STEP_MUTED 0, 0, 16
 
 #ifndef COLORS
 extern color red;

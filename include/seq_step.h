@@ -13,6 +13,24 @@ void seq_step_step_display_init();
 void seq_step_length_display_init();
 
 /**
+ * set the length of current step form button
+ * @param index - index of the pressed pad
+ */
+void seq_step_length_set(u8 index);
+
+/**
+ * displays the velocity of the current step
+ */
+void seq_step_velocity_display_init();
+
+/**
+ * set the velocity of current step form button
+ * @param index - index of the pressed pad
+ */
+void seq_step_velocity_set(u8 index);
+
+
+/**
  * step for index
  * @param - index the index to calculate the step from
  */
@@ -27,6 +45,7 @@ void seq_step_note_display_init();
  * init the seq_step buttons for instrument selection
  */
 void seq_step_inst_select_init();
+
 
 /**
  * inits the seq_step mode after a mode change
@@ -94,4 +113,11 @@ void seq_step_delete_all();
  * toggle recording state
  */
 void seq_step_toggle_recording();
+
+/**
+ * set velocity and steplength to the current step's value 
+ * for the whole sequence.
+ */
+void seq_step_quantize();
+
 #endif

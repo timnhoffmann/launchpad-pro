@@ -15,6 +15,7 @@ s8 seq_step_playing_dur[8];
 
 // pitches for 8 instruments on 16 steps
 u8 seq_step_notes[8][16];
+u8 seq_step_root_notes[8] = {36,37,38,39,40,42,60,60};
 
 // velocities for 8 instruments on 16 steps
 u8 seq_step_velocities[8][16];
@@ -46,16 +47,28 @@ void seq_step_step_display_init() {
   mc = mc%8 +1 + (mc/8 +1)*10;
   // light the step pads:
   for(int i = 11; i<19; i++) {
+    /*
     u8 v = i==mc?MAXLED:0;
     u8 w = (seq_step_mute_state[currentInstrument]&1<<(i-11))?MAXLED:5;
     u8 u = (i-11)==seq_step_play_pointer?MAXLED:0;
     hal_plot_led(TYPEPAD, i, v, u, w);
+    */
+    if((i-11)==seq_step_play_pointer) hal_plot_led(TYPEPAD, i, STEP_CURRENT);
+    else if(i== mc) hal_plot_led(TYPEPAD, i, STEP_SELECTED);
+    else if(seq_step_mute_state[currentInstrument]&1<<(i-11)) hal_plot_led(TYPEPAD, i, STEP_ACTIVE);
+    else hal_plot_led(TYPEPAD, i, STEP_MUTED);
   }
   for(int i = 21; i<29; i++) {
+    /*
     u8 v = i==mc?MAXLED:0;
     u8 w = (seq_step_mute_state[currentInstrument]&1<<(i-13))?MAXLED:5;
     u8 u = (i-13)==seq_step_play_pointer?MAXLED:0;
     hal_plot_led(TYPEPAD, i, v, u, w);
+    */
+    if((i-13)==seq_step_play_pointer) hal_plot_led(TYPEPAD, i, STEP_CURRENT);
+    else if(i== mc) hal_plot_led(TYPEPAD, i, STEP_SELECTED);
+    else if(seq_step_mute_state[currentInstrument]&1<<(i-13)) hal_plot_led(TYPEPAD, i, STEP_ACTIVE);
+    else hal_plot_led(TYPEPAD, i, STEP_MUTED);
   }
 }
 
@@ -85,8 +98,13 @@ void seq_step_note_display_init() {
 	c = note_c;
       if(note==MIDDLE_C) // for reference and orientation
 	c = note_middle_c;
-      if(note==seq_step_notes[currentInstrument][currentStep]) // the current note
-	c = note_playing;
+      if(mode == MODE_SEQ_STEP) {
+	if(note==seq_step_notes[currentInstrument][currentStep]) // the current note
+	  c = note_playing;
+      } else if(mode == MODE_SEQ_STEP_SETUP) {
+	if(note==seq_step_root_notes[currentInstrument]) // the current root note
+	  c = note_playing;
+      }
       hal_plot_led(TYPEPAD, (j+3)*10+i+1, COLOR(c));
     }
 }
@@ -107,6 +125,28 @@ void seq_step_length_set(u8 index) {
   seq_step_dur[currentInstrument][currentStep] = i + 8*j;
   seq_step_length_display_init();
 }
+
+void seq_step_velocity_display_init() {
+  // light the pads to indicate step velocity
+  for(int i = 0; i<8; i++)
+    for(int j = 0; j<8; j++) {
+      if((seq_step_velocities[currentInstrument][currentStep]/2 + 1) == (i + 1 + 8*j))
+	hal_plot_led(TYPEPAD, (j+1)*10+i+1, WHITE);
+      else {
+	u8 v = (i + 8*j);
+	hal_plot_led(TYPEPAD, (j+1)*10+i+1, v, v/2, 0);
+      }
+    }
+}
+
+void seq_step_velocity_set(u8 index) {
+  u8 i = index%10;
+  u8 j = index/10 - 1;
+  seq_step_velocities[currentInstrument][currentStep] = (i + 8*j)*2-1;
+  seq_step_velocity_display_init();
+}
+
+
 
 void seq_step_inst_select_init() {
   for(int i = 0; i<8; i++) {
@@ -129,7 +169,9 @@ void muteOrSelect(u8 index) {
     u8 j = index/10 -1;
   if(getButtonStateIndex(BUTTON_TRACK_SEL) ){
     currentInstrument = j;
-    seq_step_mode_init();
+    if(mode == MODE_SEQ_STEP)
+      seq_step_mode_init();
+    else seq_step_setup_init();
   } else {
     seq_step_active ^= 1<<j;
     if(!(seq_step_active & (1<<j)))
@@ -140,7 +182,7 @@ void muteOrSelect(u8 index) {
 
 void seq_step_delete_one(u8 inst) {
   for(int i = 0; i<16; i++) {
-    seq_step_notes[inst][i] = MIDDLE_C;
+    seq_step_notes[inst][i] = seq_step_root_notes[inst]; // MIDDLE_C;
     seq_step_velocities[inst][i] = 96;
     seq_step_dur[inst][i] = 2;
     seq_step_mute_state[inst] = 0;
@@ -157,6 +199,13 @@ void seq_step_delete_all() {
   }
 }
 
+void seq_step_quantize() {
+  for(int i = 0; i< 16; i++) {
+    seq_step_velocities[currentInstrument][i] = seq_step_velocities[currentInstrument][currentStep];
+    seq_step_dur[currentInstrument][i] = seq_step_dur[currentInstrument][currentStep];
+  }
+}
+
 void seq_step_typepad(u8 index, u8 value) {
   u8 i = index%10;
   u8 j = index/10;
@@ -164,6 +213,8 @@ void seq_step_typepad(u8 index, u8 value) {
     if(value) {
       if(getButtonStateIndex(BUTTON_SOLO)) {
 	seq_step_length_set(index);
+      } else if(getButtonStateIndex(BUTTON_VOLUME)) {
+	seq_step_velocity_set(index);
       } else {
 	currentStep = chooseStep(index);
 	if(getButtonStateIndex(BUTTON_MUTE)) {
@@ -197,6 +248,8 @@ void seq_step_typepad(u8 index, u8 value) {
     } else if(value) {
       if(getButtonStateIndex(BUTTON_SOLO)) {
 	seq_step_length_set(index);
+      } else if(getButtonStateIndex(BUTTON_VOLUME)) {
+	seq_step_velocity_set(index);
       } else {
       	u8 note = seq_step_note_root + (i-1) + (j-3)*5;
 	seq_step_notes[currentInstrument][currentStep] = note;
@@ -246,22 +299,45 @@ void seq_step_typepad(u8 index, u8 value) {
 	  hal_plot_led(TYPEPAD, index, 0, 0, 0);
       }
       break;
-    case BUTTON_DELETE: // delete current instrument's notes
+    case BUTTON_QUANTIZE: // reset to 1st step
       {
 	if(value) {
 	  hal_plot_led(TYPEPAD, index, MAXLED,MAXLED,MAXLED);
-	  seq_step_delete_one(currentInstrument);
+	  seq_step_quantize();
+	  seq_step_step_display_init();
 	} else
 	  hal_plot_led(TYPEPAD, index, 0, 0, 0);
+      }
+      break;
+
+    case BUTTON_DELETE: // delete current instrument's notes
+      {
+	if(value) {
+	  hal_plot_led(TYPEPAD, index, BUTTON_ON);
+	  seq_step_delete_one(currentInstrument);
+	} else
+	  hal_plot_led(TYPEPAD, index, BUTTON_OFF);
       }
       break;
     case BUTTON_SOLO: // step length
       {
 	if(value) {
-	  hal_plot_led(TYPEPAD, index, MAXLED,MAXLED,MAXLED);
+	  hal_plot_led(TYPEPAD, index, BUTTON_ON);
 	  seq_step_length_display_init();
 	} else {
-	  hal_plot_led(TYPEPAD, index, 0,0,0);
+	  hal_plot_led(TYPEPAD, index, BUTTON_OFF);
+	  seq_step_step_display_init();
+	  seq_step_note_display_init();
+	}
+      }
+      break;
+      case BUTTON_VOLUME: // step velocity
+      {
+	if(value) {
+	  hal_plot_led(TYPEPAD, index, BUTTON_ON);
+	  seq_step_velocity_display_init();
+	} else {
+	  hal_plot_led(TYPEPAD, index, BUTTON_OFF);
 	  seq_step_step_display_init();
 	  seq_step_note_display_init();
 	}
@@ -270,50 +346,50 @@ void seq_step_typepad(u8 index, u8 value) {
     case BUTTON_UP:
       {
 	if(value) {
-	  hal_plot_led(TYPEPAD, index, MAXLED,MAXLED,MAXLED);
+	  hal_plot_led(TYPEPAD, index, BUTTON_ON);
 	  if(seq_step_note_root>=5){
 	    seq_step_note_root-=5;
 	    seq_step_note_display_init();
 	  }
 	} else
-	  hal_plot_led(TYPEPAD, index, 0,0,0);
+	  hal_plot_led(TYPEPAD, index, BUTTON_OFF);
 	
       }
       break;
     case BUTTON_DOWN:
       {
 	if(value) {
-	  hal_plot_led(TYPEPAD, index, MAXLED,MAXLED,MAXLED);
+	  hal_plot_led(TYPEPAD, index, BUTTON_ON);
 	  if(seq_step_note_root <=150) {
 	    seq_step_note_root+=5;
 	    seq_step_note_display_init();
 	  }
 	} else
-	  hal_plot_led(TYPEPAD, index, 0,0,0);
+	  hal_plot_led(TYPEPAD, index, BUTTON_OFF);
       }
       break;
     case BUTTON_LEFT:
       {
 	if(value) {
-	  hal_plot_led(TYPEPAD, index, MAXLED,MAXLED,MAXLED);
+	  hal_plot_led(TYPEPAD, index, BUTTON_ON);
 	  if(seq_step_note_root <155) {
 	    seq_step_note_root+=1;
 	    seq_step_note_display_init();
 	  }
 	} else
-	  hal_plot_led(TYPEPAD, index, 0,0,0);
+	  hal_plot_led(TYPEPAD, index, BUTTON_OFF);
       }
       break;
     case BUTTON_RIGHT:
       {
 	if(value) {
-	  hal_plot_led(TYPEPAD, index, MAXLED,MAXLED,MAXLED);
+	  hal_plot_led(TYPEPAD, index, BUTTON_ON);
 	  if(seq_step_note_root>0) {
 	    seq_step_note_root-=1;
 	    seq_step_note_display_init();
 	  }
 	} else
-	  hal_plot_led(TYPEPAD, index, 0,0,0);
+	  hal_plot_led(TYPEPAD, index, BUTTON_OFF);
       }
       break;
     }
@@ -328,17 +404,24 @@ void seq_step_typepad(u8 index, u8 value) {
 void seq_step_setup_init() {
   chooseMIDI_init(seq_step_channel[currentInstrument]);
   seq_step_inst_select_init();
+  seq_step_note_display_init();
   u8 v = seq_step_running? MAXLED:0;
   hal_plot_led(TYPEPAD, BUTTON_CIRCLE, v,v,v);
 }
 
 void seq_step_setup_typepad(u8 index, u8 value) {
-  //  u8 i = index%10;
-  //  u8 j = index/10;
-if(isChooseMIDI(index)) {
-  //seq_step_noteOff(i);
-  seq_step_channel[currentInstrument] = chooseMIDI(index);
-  chooseMIDI_init(seq_step_channel[currentInstrument]);
+      u8 i = index%10;
+      u8 j = index/10;
+
+  if(isChooseMIDI(index)) {
+    //seq_step_noteOff(i);
+    seq_step_channel[currentInstrument] = chooseMIDI(index);
+    chooseMIDI_init(seq_step_channel[currentInstrument]);
+  } else if((i>0) && (i<9) && (j>2) && (j<9)) { // note
+    if(value) {
+      seq_step_root_notes[currentInstrument] = seq_step_note_root + (i-1) + (j-3)*5;
+      seq_step_note_display_init();
+    }
   } else if(index%10 == 9) { //seq_step buttons for inst select
     if(value) {
       muteOrSelect(index);

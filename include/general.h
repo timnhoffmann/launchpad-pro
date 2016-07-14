@@ -93,10 +93,10 @@ extern u16 buttonState[];
 #define MODE_NOTE                     BUTTON_NOTE
 #define MODE_SEQ_STEP                 BUTTON_SESSION
 #define MODE_USER                     BUTTON_USER
-#define MODE_SEQ_CA_SETUP             BUTTON_DEVICE|128
-#define MODE_NOTE_SETUP               BUTTON_NOTE|128
-#define MODE_SEQ_STEP_SETUP           BUTTON_SESSION|128
-#define MODE_USER_SETUP               BUTTON_USER|128
+#define MODE_SEQ_CA_SETUP             (BUTTON_DEVICE|128)
+#define MODE_NOTE_SETUP               (BUTTON_NOTE|128)
+#define MODE_SEQ_STEP_SETUP           (BUTTON_SESSION|128)
+#define MODE_USER_SETUP               (BUTTON_USER|128)
 #define MODE_GLOBAL_SETUP             128
 
 // your choice...
