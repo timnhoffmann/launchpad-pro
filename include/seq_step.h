@@ -101,18 +101,30 @@ void seq_step_reset();
 /**
  * delete all notes for the given instrument
  * @param inst - the instrument
+ * @parem seq - the pattern to delete
  */
-void seq_step_delete_one(u8 inst);
+void seq_step_delete_one(u8 inst, u8 seq);
 
 /**
- * delete all notes for all instruments
+ * delete all notes in all patterns for the given instrument
+ * @param inst - the instrument
  */
-void seq_step_delete_all();
+void seq_step_delete_all(u8 inst);
 
 /**
  * toggle recording state
  */
 void seq_step_toggle_recording();
+
+/**
+ * toggle mute or select current step
+ */
+void seq_step_toggle_mute();
+
+/**
+ * toggle mute or select current step
+ */
+void seq_step_toggle_track_select();
 
 /**
  * set velocity and steplength to the current step's value 

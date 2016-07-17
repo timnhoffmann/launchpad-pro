@@ -49,10 +49,18 @@ typedef u8 color[3];
 #define NOTEBIT_ON 0, 0, 63
 
 // seq step step display
-#define STEP_CURRENT 48, 16, 0
+#define STEP_PLAYING 48, 16, 0
 #define STEP_SELECTED 16, 63, 0
 #define STEP_ACTIVE 0, 32, 63
 #define STEP_MUTED 0, 0, 16
+
+#define SEQ_PLAYING 48, 16, 0
+#define SEQ_SELECTED 16, 63, 0
+#define SEQ_START 8, 8, 63
+#define SEQ_MUTED 16, 0, 0
+
+
+
 
 #ifndef COLORS
 extern color red;

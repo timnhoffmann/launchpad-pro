@@ -266,7 +266,8 @@ void app_init()
   setBPMtt(1200); // 125 bpm
   setInternalSync(1);
 
-  seq_step_delete_all();
+  for(int i = 0; i<8; i++)
+    seq_step_delete_all(i);
     
   
   //hal_plot_led(TYPEPAD, BUTTON_DEVICE, MAXLED, MAXLED, MAXLED);

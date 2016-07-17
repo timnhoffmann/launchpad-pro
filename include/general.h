@@ -52,7 +52,7 @@ extern u16 buttonState[];
 #define	BUTTON_VOLUME		05
 #define	BUTTON_PAN		06
 #define	BUTTON_SENDS		07
-#define	BUTTON_STOP_CLIP	08
+#define	BUTTON_STOP_CLIP	 8
 //
 #define	BUTTON_CIRCLE		10
 #define	BUTTON_DOUBLE		20

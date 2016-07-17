@@ -4,27 +4,32 @@ This is a still rather experimental sequencer running on the launchpad pro. This
 ## Functionality
 Currently the system has three modes accessed by the upper right buttons "Session", "Note", and "Device". "Note" will give you a plain grid for playing an instrument in the now already usual way: columns are a semi-tone apart, rows are a 4th.
 
-"Session" gives a 8 track or instrument 16 step pattern sequencer. Again in a rather usual way: It allwos for realtime recording or step input.
+"Session" gives a 8 track or instrument pattern sequencer. Again in a rather usual way: It allwos for realtime recording or step input. The sequences are organized in 8 patterns of 16 steps, the sequence length can be anything from 1 to 128 steps.
 
 "Device" enters the most interesting part: A 8 track or instrument sequencer driven by a cellular automaton. Namely the deterministic ising model. The 8x8 pads repersent the cells of the automaton with neigbourhood seen periodic across the borders (the rightmost pad in a row will have the leftmost one in the same row as its right neighbour etc...). The cells evolve in each timestep acordingg to the following rule: A cell switches its state (on or off) exactly if two of its direct neighbours are on (and two are off). This is done forst for the even and then for the odd "halfgrid" (think checkerboard). Now, each of the eight rows controls an instrument in the following way: if the number of on cells is odd, a note is played. The velocity is given by the number of on cells (v = number*18+1, actually) and the pitch is derived by the following rule: Each cell that is "on" when the instrument plays will add (form left to right) -12, 12, 7, 5, 3, 2, 2, and 1 semi-note resp. to the base note of that instrument. However, each cell can be configured to not contribute (on a per instrument base), making it possible for an instrument to only play its (configurable) base pitch (usefull for drums, I suppose...). 
+
 ### Step sequencer (Session)
-This mode gives a 8 instrument and 16 step sequencer.
+This mode gives a 8 instrument and step sequencer.
 - Click: switches between internal clock and sync to MIDI-clock (globally)
 - Circle: start or stop the sequencer.
-- Delete: erases all notes for the current instrument
-- Quantize: sets the velocities and step lengths for the whole sequence to the current step's values
-- Double: resets the step sequencer to 1st step
+- Duplicate: duplicated the current pattern of 16 steps to the next one
+- Delete: erases all notes for the current instrument in the current 16 note pattern. Holding shift deletes all 8 patterns for the instrument.
+- Quantize: sets the velocities and step lengths for the whole current pattern to the current step's values
+- Double: resets the step sequencer to 1st step of the starting pattern
 - Record arm: toggles the record mode. This allows the current instrument to have its steps recorded in realtime (still kind of experimental - might behave weirdly if more than one note is played etc...)
-- pressing one of the scene Arrows (right): mute or unmute an instrument.
-- holding Track select and pressing one of the scene Arrows (right): select an instrument (for step editing).
+- Sends: sets the starting 16 step pattern for the current instrument
+- stop clip: holding this and pressing a step pad (lower 2 rows) sets the last step of the sequence. With this the lenth of the sequence can be anything from 1 to 128 steps (if the starting pattern is the first and the last step is set to the 16th of the 8th pattern). The seq-length is per instrument, of course.
+- Track select: toggles scene arrows (right) function: select an instrument (for step editing) or mute/unmute an instrument.
+- arrows (right): depending on the track select button state: mute or unmute an instrument or select an instrument (for step editing)
 - holding solo lets you set the length of the currently selected step in quarters of a step fractions
 - holding volume lets you set the velocity of the currenetly selected step (in increments of 2)
 - the lower two pad rows (blue): select a step.
-- pad rows 3-8: select the note for the instrument and step. The note C is highlighted in magenta and middle C in yellow for orientation. This grid can be shifted around with the arrow buttons (upper left). The velocity of the step is recorded.
-- the lower two pad rows (blue) while holding "Mute": mute a step.
+- the thirs pad row (red) selects one of the eight patterns for editing. Holding send while pressing sets the first/starting pattern for playback. Holding shift while pressing does the same for all instruments at once.
+- pad rows 4-8: select the note for the instrument and step. The note C is highlighted in orange and middle C in light blue for orientation. This grid can be shifted around with the arrow buttons (upper left). The velocity of the step is recorded.
+- the lower two pad rows (blue): depending on the state of the "mute" button: mute/unmute a step or select the step for editing (making it current).
 
 ### "Piano-grid" (Note)
-A playable (velocity sensitive) note grid. The spacing is halfsteps to the sides and 4th up and down. The notes C are highlighted in magenta and middle C in yellow for orientation. The grid can be shifted around with the arrow buttons (upper left). 
+A playable (velocity sensitive) note grid. The spacing is halfsteps to the sides and 4th up and down. The notes C are highlighted in orange and middle C in light blue for orientation. The grid can be shifted around with the arrow buttons (upper left). 
 
 Pressing "setup" (upper left corner) will enter the setup mode. Then
 - lower two pad rows (blue): select the MIDI channel for the istrument.
@@ -42,7 +47,7 @@ Pressing "setup" (upper left corner) will enter the setup mode. Then
 
 pressing "setup" (upper left corner) will enter the setup mode. Here one can -- after selecting an instrument with the scene arrows (right) --
 - lower two pad rows (blue): select the MIDI channel for the istrument.
-- pad rows 3-7: select the (base) note for the instrument. The note C is highlighted in magenta and middle C in yellow for orientation. This grid can be shifted around with the arrow buttons (upper left).
+- pad rows 3-7: select the (base) note for the instrument. The note C is highlighted in orange and middle C in light blue for orientation. This grid can be shifted around with the arrow buttons (upper left).
 - upper pad row (blue): set which of the "bits" or cells in the ca pattern in the row of the selected instrument alter the pitch. If all of them are deselected the instrument will only play the base note. If switched on the cells will add (form left to right) -12, 12, 7, 5, 3, 2, 2, and 1 resp. whenever the corresponding cells are light when the instrument plays.
 ## global setup
 Pressing setup while holding shift opens a global setup page.
