@@ -130,7 +130,8 @@ void app_surface_event(u8 type, u8 index, u8 value) {
 
 //______________________________________________________________________________
 //
-// we keep the MIDI-USB conversion functionality for now and handle MIDI clock
+// we keep the MIDI-USB conversion functionality (for MODE_USER for now)
+// and handle MIDI clock
 //______________________________________________________________________________
 //
 
@@ -138,13 +139,13 @@ void app_midi_event(u8 port, u8 status, u8 d1, u8 d2)
 {
   // no pass through for now. I suspect that this might be responsible for the occasional
   // crash in the midi handling I saw
-  /*
 	// example - MIDI interface functionality for USB "MIDI" port -> DIN port
-	if (port == USBMIDI)
+  if ((port == USBMIDI) && (mode == MODE_USER))
 	{
 		hal_send_midi(DINMIDI, status, d1, d2);
 	}
 
+  /*
 	// example -MIDI interface functionality for DIN -> USB "MIDI" port port
 	if (port == DINMIDI)
 	{
@@ -206,23 +207,24 @@ void app_cable_event(u8 type, u8 value)
     // example - light the Setup LED to indicate cable connections
 	if (type == MIDI_IN_CABLE)
 	{
-		hal_plot_led(TYPESETUP, 0, 0, value, 0); // green
+	  //hal_plot_led(TYPESETUP, 0, 0, value, 0); // green
 	}
 	else if (type == MIDI_OUT_CABLE)
 	{
-		hal_plot_led(TYPESETUP, 0, value, 0, 0); // red
+	  //hal_plot_led(TYPESETUP, 0, value, 0, 0); // red
+	  midiport = value?DINMIDI:USBMIDI;
 	}
 }
 
 //______________________________________________________________________________
 //
-// this will have to handle the internal clock - once it is implemented :)
+// this delegates handling the internal clock to msTick() from timing.c
 //______________________________________________________________________________
 //
 void app_timer_event()
 {
   msTick();
-  
+  /*
 	// example - send MIDI clock at 125bpm
 #define TICK_MS 20
 	
@@ -237,13 +239,14 @@ void app_timer_event()
 	  if(mt >= 96)
 	    mt = 0;	  
 		// send a clock pulse up the USB
-		//hal_send_midi(USBSTANDALONE, MIDITIMINGCLOCK, 0, 0);
+		hal_send_midi(USBSTANDALONE, MIDITIMINGCLOCK, 0, 0);
 	}
+  */
 }
 
 //______________________________________________________________________________
 //
-// nothing to initialize really at the moment...
+// not much to initialize really at the moment...
 //______________________________________________________________________________
 //
 void app_init()

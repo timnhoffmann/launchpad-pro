@@ -281,88 +281,97 @@ void seq_step_quantize() {
 void seq_step_typepad(u8 index, u8 value) {
   u8 i = index%10;
   u8 j = index/10;
-  if((i>0) && (i<9) && (j>0) && (j<3)) {// step
-    if(value) {
-      if(getButtonStateIndex(BUTTON_SOLO)) {
+  if((i>0) && (i<9) && (j>0) && (j<9)) {// pad
+    if(getButtonStateIndex(BUTTON_SOLO)) {
+      if(value)
 	seq_step_length_set(index);
-      } else if(getButtonStateIndex(BUTTON_VOLUME)) {
+    } else if(getButtonStateIndex(BUTTON_VOLUME)) {
+      if(value)
 	seq_step_velocity_set(index);
-      } else if(getButtonStateIndex(BUTTON_STOP_CLIP)) {
-	u8 sq = currentSeq -seq_step_start_seq[currentInstrument];
-	sq = sq>=0?sq:0;
-	seq_step_seq_length[currentInstrument] = 16*(sq) + 8*(j-1) + (i);
-      } else if(mute_mode) {
-	seq_step_mute_state[currentInstrument][currentSeq] ^= (1<<(8*(j-1) + (i-1)));
-	seq_step_step_display_init();
-      } else {
-	currentStep[currentInstrument] = chooseStep(index);
-	if(getButtonStateIndex(BUTTON_MUTE)) {
-	  seq_step_mute_state[currentInstrument][currentSeq] ^= (1<<currentStep[currentInstrument]);
-	} 
+    } else if((i>0) && (i<9) && (j>0) && (j<3)) {// step
+      if(value) {
+	/* if(getButtonStateIndex(BUTTON_SOLO)) { */
+	/* 	seq_step_length_set(index); */
+	/* } else if(getButtonStateIndex(BUTTON_VOLUME)) { */
+	/* 	seq_step_velocity_set(index); */
+	/* } else */
+	if(getButtonStateIndex(BUTTON_STOP_CLIP)) {
+	  u8 sq = currentSeq -seq_step_start_seq[currentInstrument];
+	  sq = sq>=0?sq:0;
+	  seq_step_seq_length[currentInstrument] = 16*(sq) + 8*(j-1) + (i);
+	} else if(mute_mode) {
+	  seq_step_mute_state[currentInstrument][currentSeq] ^= (1<<(8*(j-1) + (i-1)));
+	  seq_step_step_display_init();
+	} else {
+	  currentStep[currentInstrument] = chooseStep(index);
+	  if(getButtonStateIndex(BUTTON_MUTE)) {
+	    seq_step_mute_state[currentInstrument][currentSeq] ^= (1<<currentStep[currentInstrument]);
+	  } 
+	  seq_step_step_display_init();
+	  seq_step_note_display_init();
+	}
+      }
+    } else if((i>0) && (i<9) && (j==3) ) {// seq
+      if(value) {
+	u8 s = chooseSeq(index);
+	if(getButtonStateIndex(BUTTON_SHIFT)) {
+	  for(int k = 0; k<8; k++)
+	    seq_step_start_seq[k] = s;
+	} else if(getButtonStateIndex(BUTTON_SENDS)) {
+	  seq_step_start_seq[currentInstrument] = s;
+	} else 
+	  currentSeq = s;
 	seq_step_step_display_init();
 	seq_step_note_display_init();
       }
-    }
-  } else if((i>0) && (i<9) && (j==3) ) {// seq
-    if(value) {
-      u8 s = chooseSeq(index);
-      if(getButtonStateIndex(BUTTON_SHIFT)) {
-	for(int k = 0; k<8; k++)
-	  seq_step_start_seq[k] = s;
-      } else if(getButtonStateIndex(BUTTON_SENDS)) {
-	seq_step_start_seq[currentInstrument] = s;
-      } else 
-	currentSeq = s;
-      seq_step_step_display_init();
-      seq_step_note_display_init();
-    }
-  } else if((i>0) && (i<9) && (j>3) && (j<9)) { // note
-    if(recording) {
-      if( (value == 0 && seq_step_rec_index == index) || (seq_step_rec_note >= 0) ) {
-	seq_step_dur[currentInstrument][seq_step_rec_seq][seq_step_rec_pos] = seq_step_rec_dur;
-	seq_step_mute_state[currentInstrument][seq_step_rec_seq] |= (1<<seq_step_rec_pos);
-	hal_send_midi(midiport, NOTEON | seq_step_channel[currentInstrument], seq_step_playing[currentInstrument], 0);
-	seq_step_playing_dur[currentInstrument] = 0;
-	seq_step_rec_note = -1;
-      }
-      if(value) {
-	u8 point = (0*(timingRoundOff()>0?1:0) + (u16)seq_step_play_pointer[currentInstrument] + seq_step_seq_length[currentInstrument] )%seq_step_seq_length[currentInstrument];
-	u8 st = point%16;
-	u8 sq = (point/16 + seq_step_start_seq[j])%8;
-	// stop any playing note
-	seq_step_noteOff(currentInstrument);
-	seq_step_rec_pos = st;
-	seq_step_rec_seq = sq;
-	seq_step_rec_dur = 1;
-	seq_step_rec_note = seq_step_note_root + (i-1) + (j-4)*5;
-	seq_step_rec_index = index;
+    } else if((i>0) && (i<9) && (j>3) && (j<9)) { // note
+      if(recording) {
+	if( (value == 0 && seq_step_rec_index == index) || (seq_step_rec_note >= 0) ) {
+	  seq_step_dur[currentInstrument][seq_step_rec_seq][seq_step_rec_pos] = seq_step_rec_dur;
+	  seq_step_mute_state[currentInstrument][seq_step_rec_seq] |= (1<<seq_step_rec_pos);
+	  hal_send_midi(midiport, NOTEON | seq_step_channel[currentInstrument], seq_step_playing[currentInstrument], 0);
+	  seq_step_playing_dur[currentInstrument] = 0;
+	  seq_step_rec_note = -1;
+	}
+	if(value) {
+	  u8 point = (0*(timingRoundOff()>0?1:0) + (u16)seq_step_play_pointer[currentInstrument] + seq_step_seq_length[currentInstrument] )%seq_step_seq_length[currentInstrument];
+	  u8 st = point%16;
+	  u8 sq = (point/16 + seq_step_start_seq[j])%8;
+	  // stop any playing note
+	  seq_step_noteOff(currentInstrument);
+	  seq_step_rec_pos = st;
+	  seq_step_rec_seq = sq;
+	  seq_step_rec_dur = 1;
+	  seq_step_rec_note = seq_step_note_root + (i-1) + (j-4)*5;
+	  seq_step_rec_index = index;
+	  
+	  seq_step_notes[currentInstrument][sq][st] = seq_step_rec_note;
+	  seq_step_velocities[currentInstrument][sq][st] = value;
+	  seq_step_mute_state[currentInstrument][sq] &= ~(1<<st);
+	  seq_step_playing[currentInstrument] = seq_step_rec_note;
+	  hal_send_midi(midiport, NOTEON | seq_step_channel[currentInstrument], seq_step_playing[currentInstrument], value);
+	  seq_step_playing_dur[currentInstrument] = 64;
+	  seq_step_note_display_init();		
+	}
+	/* else { */
+	/* 	seq_step_dur[currentInstrument][seq_step_rec_seq][seq_step_rec_pos] = seq_step_rec_dur; */
+	/* 	seq_step_mute_state[currentInstrument][seq_step_rec_seq] |= (1<<seq_step_rec_pos); */
+	/* 	hal_send_midi(midiport, NOTEON | seq_step_channel[currentInstrument], seq_step_playing[currentInstrument], 0); */
 	
-	seq_step_notes[currentInstrument][sq][st] = seq_step_rec_note;
-	seq_step_velocities[currentInstrument][sq][st] = value;
-	seq_step_mute_state[currentInstrument][sq] &= ~(1<<st);
-	seq_step_playing[currentInstrument] = seq_step_rec_note;
-	hal_send_midi(midiport, NOTEON | seq_step_channel[currentInstrument], seq_step_playing[currentInstrument], value);
-	seq_step_playing_dur[currentInstrument] = 64;
-	seq_step_note_display_init();		
-      }
-      /* else { */
-      /* 	seq_step_dur[currentInstrument][seq_step_rec_seq][seq_step_rec_pos] = seq_step_rec_dur; */
-      /* 	seq_step_mute_state[currentInstrument][seq_step_rec_seq] |= (1<<seq_step_rec_pos); */
-      /* 	hal_send_midi(midiport, NOTEON | seq_step_channel[currentInstrument], seq_step_playing[currentInstrument], 0); */
-
-      /* } */
-    } else if(value) {
-      if(getButtonStateIndex(BUTTON_SOLO)) {
-	seq_step_length_set(index);
-      } else if(getButtonStateIndex(BUTTON_VOLUME)) {
-	seq_step_velocity_set(index);
-      } else {
+	/* } */
+      } else if(value) {
+	/* if(getButtonStateIndex(BUTTON_SOLO)) { */
+	/* 	seq_step_length_set(index); */
+	/* } else if(getButtonStateIndex(BUTTON_VOLUME)) { */
+	/* 	seq_step_velocity_set(index); */
+	/* } else { */
       	u8 note = seq_step_note_root + (i-1) + (j-4)*5;
 	seq_step_notes[currentInstrument][currentSeq][currentStep[currentInstrument]] = note;
 	seq_step_velocities[currentInstrument][currentSeq][currentStep[currentInstrument]] = value;
 	seq_step_mute_state[currentInstrument][currentSeq] |= (1<<currentStep[currentInstrument]);
 	seq_step_dur[currentInstrument][currentSeq][currentStep[currentInstrument]] = 3; // TODO: default length?
 	seq_step_note_display_init();
+	/* } */
       }
     }
   } else if(index%10 == 9) { //seq_step buttons for inst select
@@ -554,7 +563,7 @@ void seq_step_setup_typepad(u8 index, u8 value) {
     chooseMIDI_init(seq_step_channel[currentInstrument]);
   } else if((i>0) && (i<9) && (j>2) && (j<9)) { // note
     if(value) {
-      seq_step_root_notes[currentInstrument] = seq_step_note_root + (i-1) + (j-3)*5;
+      seq_step_root_notes[currentInstrument] = seq_step_note_root + (i-1) + (j-4)*5;
       seq_step_note_display_init();
     }
   } else if(index%10 == 9) { //seq_step buttons for inst select
